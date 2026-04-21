@@ -1,0 +1,592 @@
+openapi: 3.0.3
+info:
+  title: DataShare API
+  version: 1.0.0
+  description: |
+    Contrat d'interface de l'application DataShare.
+    Ce document decrit une premiere version de l'API REST a partir des maquettes
+    de l'etape 1. Il couvre l'authentification, le televersement de fichiers,
+    la generation de liens de partage, le telechargement public et l'espace
+    personnel utilisateur.
+  license:
+    name: UNLICENSED
+
+servers:
+  - url: https://api.datashare.fr
+    description: URL cible de l'API en production
+
+tags:
+  - name: Auth
+    description: Authentification et gestion du compte
+  - name: Users
+    description: Informations sur l'utilisateur connecte
+  - name: Files
+    description: Televersement, consultation et suppression des fichiers
+  - name: ShareLinks
+    description: Consultation et telechargement via un lien public
+
+paths:
+  /auth/register:
+    post:
+      security: []
+      tags:
+        - Auth
+      summary: Creer un compte utilisateur
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              default:
+                summary: Exemple de creation de compte
+                value:
+                  email: claire.marie@datashare.fr
+                  password: StrongPassword123!
+                  passwordConfirmation: StrongPassword123!
+      responses:
+        '201':
+          description: Compte cree avec succes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Donnees invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email deja utilise
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      security: []
+      tags:
+        - Auth
+      summary: Connecter un utilisateur
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              default:
+                summary: Exemple de connexion
+                value:
+                  email: claire.marie@datashare.fr
+                  password: StrongPassword123!
+      responses:
+        '200':
+          description: Connexion reussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Donnees invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Identifiants invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Recuperer le profil de l'utilisateur connecte
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profil retourne avec succes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Utilisateur non authentifie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /files:
+    post:
+      security: []
+      tags:
+        - Files
+      summary: Televerser un fichier et generer un lien de partage
+      description: |
+        Cette route permet de televerser un fichier depuis la page d'accueil.
+        L'utilisateur peut etre connecte ou non.
+        Un mot de passe de partage et une duree d'expiration peuvent etre
+        ajoutes de maniere optionnelle.
+      operationId: uploadFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Fichier a televerser
+                sharePassword:
+                  type: string
+                  nullable: true
+                  description: Mot de passe optionnel pour proteger le lien
+                expirationDays:
+                  type: integer
+                  nullable: true
+                  description: Nombre de jours avant expiration du lien
+                  example: 7
+            encoding:
+              file:
+                contentType: application/octet-stream
+      responses:
+        '201':
+          description: Fichier televerse avec succes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          description: Requete invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Fichier trop volumineux
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Files
+      summary: Lister les fichiers de l'utilisateur connecte
+      operationId: listOwnFiles
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          required: false
+          description: Filtre d'etat pour la liste des fichiers
+          schema:
+            type: string
+            enum:
+              - all
+              - active
+              - expired
+            default: all
+      responses:
+        '200':
+          description: Liste des fichiers retournee avec succes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FileListItem'
+        '401':
+          description: Utilisateur non authentifie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /files/{fileId}:
+    delete:
+      tags:
+        - Files
+      summary: Supprimer un fichier de l'espace personnel
+      operationId: deleteFile
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: fileId
+          required: true
+          description: Identifiant du fichier a supprimer
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Fichier supprime avec succes
+        '401':
+          description: Utilisateur non authentifie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Fichier introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /share-links/{token}:
+    get:
+      security: []
+      tags:
+        - ShareLinks
+      summary: Consulter les informations d'un lien de partage
+      operationId: getShareLink
+      parameters:
+        - in: path
+          name: token
+          required: true
+          description: Token public du lien de partage
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Informations du lien de partage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareLinkPublic'
+        '404':
+          description: Lien introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Lien expire
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /share-links/{token}/download:
+    post:
+      security: []
+      tags:
+        - ShareLinks
+      summary: Telecharger un fichier depuis un lien public
+      operationId: downloadSharedFile
+      parameters:
+        - in: path
+          name: token
+          required: true
+          description: Token public du lien de partage
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadRequest'
+            examples:
+              protected:
+                summary: Exemple avec mot de passe
+                value:
+                  password: mon-mot-de-passe
+      responses:
+        '200':
+          description: Fichier pret a etre telecharge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadResponse'
+        '401':
+          description: Mot de passe incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Lien introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Lien expire
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - passwordConfirmation
+      properties:
+        email:
+          type: string
+          format: email
+          example: claire.marie@datashare.fr
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: StrongPassword123!
+        passwordConfirmation:
+          type: string
+          format: password
+          minLength: 8
+          example: StrongPassword123!
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: claire.marie@datashare.fr
+        password:
+          type: string
+          format: password
+          example: StrongPassword123!
+
+    DownloadRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          nullable: true
+          description: Mot de passe du lien si une protection est active
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AuthResponse:
+      type: object
+      required:
+        - accessToken
+        - user
+      properties:
+        accessToken:
+          type: string
+          description: Token JWT d'authentification
+        user:
+          $ref: '#/components/schemas/User'
+
+    FileListItem:
+      type: object
+      required:
+        - id
+        - originalName
+        - size
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        originalName:
+          type: string
+        size:
+          type: integer
+          format: int64
+          example: 2860000
+        mimeType:
+          type: string
+          example: image/jpeg
+        shareToken:
+          type: string
+          nullable: true
+        shareUrl:
+          type: string
+          format: uri
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum:
+            - active
+            - expired
+        createdAt:
+          type: string
+          format: date-time
+
+    UploadResponse:
+      type: object
+      required:
+        - file
+        - shareLink
+      properties:
+        file:
+          $ref: '#/components/schemas/FileSummary'
+        shareLink:
+          $ref: '#/components/schemas/ShareLinkCreated'
+
+    FileSummary:
+      type: object
+      required:
+        - id
+        - originalName
+        - size
+        - mimeType
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+          nullable: true
+        originalName:
+          type: string
+        size:
+          type: integer
+          format: int64
+        mimeType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ShareLinkCreated:
+      type: object
+      required:
+        - id
+        - token
+        - url
+        - passwordProtected
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        token:
+          type: string
+        url:
+          type: string
+          format: uri
+          example: https://datashare.fr/uNh0vr
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        passwordProtected:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    ShareLinkPublic:
+      type: object
+      required:
+        - fileName
+        - fileSize
+        - passwordRequired
+        - status
+      properties:
+        fileName:
+          type: string
+        fileSize:
+          type: integer
+          format: int64
+        message:
+          type: string
+          nullable: true
+          description: Message informatif affiche sur la page publique
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        passwordRequired:
+          type: boolean
+        status:
+          type: string
+          enum:
+            - active
+            - expired
+
+    DownloadResponse:
+      type: object
+      required:
+        - downloadUrl
+        - fileName
+      properties:
+        downloadUrl:
+          type: string
+          format: uri
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+          format: int64
+
+    ErrorResponse:
+      type: object
+      required:
+        - statusCode
+        - message
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: La requete est invalide.
