@@ -4,22 +4,16 @@ info:
   version: 1.0.0
   description: |
     Contrat d'interface de l'application DataShare.
-    Ce document décrit une première version de l'API REST à partir des maquettes
-    de l'étape 1. Il couvre l'authentification, le téléversement de fichiers,
-    la génération de liens de partage, le téléchargement public et l'espace
-    personnel utilisateur.
+    Ce document décrit une première version de l'API REST déduite des maquettes
+    et des spécifications de l'étape 1. Il couvre l'authentification, le
+    téléversement de fichiers, la génération de liens de partage, le
+    téléchargement public et l'espace personnel utilisateur.
   license:
     name: UNLICENSED
-
-servers:
-  - url: https://api.datashare.fr
-    description: URL cible de l'API en production
 
 tags:
   - name: Auth
     description: Authentification et gestion du compte
-  - name: Users
-    description: Informations sur l'utilisateur connecté
   - name: Files
     description: Téléversement, consultation et suppression des fichiers
   - name: ShareLinks
@@ -52,7 +46,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/User'
         '400':
           description: Données invalides
           content:
@@ -100,28 +94,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Identifiants invalides
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /users/me:
-    get:
-      tags:
-        - Users
-      summary: Récupérer le profil de l'utilisateur connecté
-      operationId: getCurrentUser
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Profil retourné avec succès
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          description: Utilisateur non authentifié
           content:
             application/json:
               schema:
@@ -315,11 +287,12 @@ paths:
                   password: mon-mot-de-passe
       responses:
         '200':
-          description: Fichier prêt à être téléchargé
+          description: Fichier téléchargé avec succès
           content:
-            application/json:
+            application/octet-stream:
               schema:
-                $ref: '#/components/schemas/DownloadResponse'
+                type: string
+                format: binary
         '401':
           description: Mot de passe incorrect
           content:
@@ -560,23 +533,6 @@ components:
           enum:
             - active
             - expired
-
-    DownloadResponse:
-      type: object
-      required:
-        - downloadUrl
-        - fileName
-      properties:
-        downloadUrl:
-          type: string
-          format: uri
-        fileName:
-          type: string
-        mimeType:
-          type: string
-        size:
-          type: integer
-          format: int64
 
     ErrorResponse:
       type: object
