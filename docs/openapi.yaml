@@ -8,7 +8,7 @@ info:
     de l'etape 1. Il couvre l'authentification, le televersement de fichiers,
     la generation de liens de partage, le telechargement public et l'espace
     personnel utilisateur.
-  license:
+  license: UNLICENSED
     name: UNLICENSED
 
 servers:

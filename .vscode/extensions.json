@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "eamodio.gitlens",
+    "EditorConfig.EditorConfig",
+    "redocly.openapi-vs-code",
+    "bierner.markdown-mermaid",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "ms-azuretools.vscode-docker"
+  ]
+}
