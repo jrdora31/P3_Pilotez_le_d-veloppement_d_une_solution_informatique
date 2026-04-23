@@ -4,11 +4,11 @@ info:
   version: 1.0.0
   description: |
     Contrat d'interface de l'application DataShare.
-    Ce document decrit une premiere version de l'API REST a partir des maquettes
-    de l'etape 1. Il couvre l'authentification, le televersement de fichiers,
-    la generation de liens de partage, le telechargement public et l'espace
+    Ce document décrit une première version de l'API REST à partir des maquettes
+    de l'étape 1. Il couvre l'authentification, le téléversement de fichiers,
+    la génération de liens de partage, le téléchargement public et l'espace
     personnel utilisateur.
-  license: UNLICENSED
+  license:
     name: UNLICENSED
 
 servers:
@@ -19,11 +19,11 @@ tags:
   - name: Auth
     description: Authentification et gestion du compte
   - name: Users
-    description: Informations sur l'utilisateur connecte
+    description: Informations sur l'utilisateur connecté
   - name: Files
-    description: Televersement, consultation et suppression des fichiers
+    description: Téléversement, consultation et suppression des fichiers
   - name: ShareLinks
-    description: Consultation et telechargement via un lien public
+    description: Consultation et téléchargement via un lien public
 
 paths:
   /auth/register:
@@ -31,7 +31,7 @@ paths:
       security: []
       tags:
         - Auth
-      summary: Creer un compte utilisateur
+      summary: Créer un compte utilisateur
       operationId: registerUser
       requestBody:
         required: true
@@ -41,26 +41,26 @@ paths:
               $ref: '#/components/schemas/RegisterRequest'
             examples:
               default:
-                summary: Exemple de creation de compte
+                summary: Exemple de création de compte
                 value:
                   email: claire.marie@datashare.fr
                   password: StrongPassword123!
                   passwordConfirmation: StrongPassword123!
       responses:
         '201':
-          description: Compte cree avec succes
+          description: Compte créé avec succès
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
-          description: Donnees invalides
+          description: Données invalides
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: Email deja utilise
+          description: Email déjà utilisé
           content:
             application/json:
               schema:
@@ -87,13 +87,13 @@ paths:
                   password: StrongPassword123!
       responses:
         '200':
-          description: Connexion reussie
+          description: Connexion réussie
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
-          description: Donnees invalides
+          description: Données invalides
           content:
             application/json:
               schema:
@@ -109,19 +109,19 @@ paths:
     get:
       tags:
         - Users
-      summary: Recuperer le profil de l'utilisateur connecte
+      summary: Récupérer le profil de l'utilisateur connecté
       operationId: getCurrentUser
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Profil retourne avec succes
+          description: Profil retourné avec succès
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
         '401':
-          description: Utilisateur non authentifie
+          description: Utilisateur non authentifié
           content:
             application/json:
               schema:
@@ -132,12 +132,12 @@ paths:
       security: []
       tags:
         - Files
-      summary: Televerser un fichier et generer un lien de partage
+      summary: Téléverser un fichier et générer un lien de partage
       description: |
-        Cette route permet de televerser un fichier depuis la page d'accueil.
-        L'utilisateur peut etre connecte ou non.
-        Un mot de passe de partage et une duree d'expiration peuvent etre
-        ajoutes de maniere optionnelle.
+        Cette route permet de téléverser un fichier depuis la page d'accueil.
+        L'utilisateur peut être connecté ou non.
+        Un mot de passe de partage et une durée d'expiration peuvent être
+        ajoutés de manière optionnelle.
       operationId: uploadFile
       requestBody:
         required: true
@@ -151,11 +151,11 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: Fichier a televerser
+                  description: Fichier à téléverser
                 sharePassword:
                   type: string
                   nullable: true
-                  description: Mot de passe optionnel pour proteger le lien
+                  description: Mot de passe optionnel pour protéger le lien
                 expirationDays:
                   type: integer
                   nullable: true
@@ -166,13 +166,13 @@ paths:
                 contentType: application/octet-stream
       responses:
         '201':
-          description: Fichier televerse avec succes
+          description: Fichier téléversé avec succès
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UploadResponse'
         '400':
-          description: Requete invalide
+          description: Requête invalide
           content:
             application/json:
               schema:
@@ -187,7 +187,7 @@ paths:
     get:
       tags:
         - Files
-      summary: Lister les fichiers de l'utilisateur connecte
+      summary: Lister les fichiers de l'utilisateur connecté
       operationId: listOwnFiles
       security:
         - bearerAuth: []
@@ -195,7 +195,7 @@ paths:
         - in: query
           name: status
           required: false
-          description: Filtre d'etat pour la liste des fichiers
+          description: Filtre d'état pour la liste des fichiers
           schema:
             type: string
             enum:
@@ -205,7 +205,7 @@ paths:
             default: all
       responses:
         '200':
-          description: Liste des fichiers retournee avec succes
+          description: Liste des fichiers retournée avec succès
           content:
             application/json:
               schema:
@@ -216,7 +216,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/FileListItem'
         '401':
-          description: Utilisateur non authentifie
+          description: Utilisateur non authentifié
           content:
             application/json:
               schema:
@@ -234,15 +234,15 @@ paths:
         - in: path
           name: fileId
           required: true
-          description: Identifiant du fichier a supprimer
+          description: Identifiant du fichier à supprimer
           schema:
             type: string
             format: uuid
       responses:
         '204':
-          description: Fichier supprime avec succes
+          description: Fichier supprimé avec succès
         '401':
-          description: Utilisateur non authentifie
+          description: Utilisateur non authentifié
           content:
             application/json:
               schema:
@@ -282,7 +282,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '410':
-          description: Lien expire
+          description: Lien expiré
           content:
             application/json:
               schema:
@@ -293,7 +293,7 @@ paths:
       security: []
       tags:
         - ShareLinks
-      summary: Telecharger un fichier depuis un lien public
+      summary: Télécharger un fichier depuis un lien public
       operationId: downloadSharedFile
       parameters:
         - in: path
@@ -315,7 +315,7 @@ paths:
                   password: mon-mot-de-passe
       responses:
         '200':
-          description: Fichier pret a etre telecharge
+          description: Fichier prêt à être téléchargé
           content:
             application/json:
               schema:
@@ -333,7 +333,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '410':
-          description: Lien expire
+          description: Lien expiré
           content:
             application/json:
               schema:
@@ -548,7 +548,7 @@ components:
         message:
           type: string
           nullable: true
-          description: Message informatif affiche sur la page publique
+          description: Message informatif affiché sur la page publique
         expiresAt:
           type: string
           format: date-time
@@ -589,4 +589,4 @@ components:
           example: 400
         message:
           type: string
-          example: La requete est invalide.
+          example: La requête est invalide.
