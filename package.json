@@ -1,0 +1,8 @@
+{
+  "name": "projet-3",
+  "private": true,
+  "scripts": {
+    "swagger": "node scripts/serve-swagger.mjs",
+    "openapi:lint": "npx @redocly/cli lint docs/openapi.yaml"
+  }
+}

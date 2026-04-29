@@ -10,6 +10,22 @@ info:
     téléchargement public et l'espace personnel utilisateur.
   license:
     name: UNLICENSED
+    url: https://choosealicense.com/no-permission/
+
+servers:
+  - url: '{protocol}://{host}'
+    description: Environnement local ou personnalisé
+    variables:
+      protocol:
+        default: http
+        enum:
+          - http
+          - https
+      host:
+        default: localhost:3000
+        description: Hôte de l'API
+  - url: https://api.datashare.fr
+    description: Environnement de production
 
 tags:
   - name: Auth
