@@ -1,5 +1,8 @@
 # Nestjs specific
 /dist
+/backend/dist
+/backend/coverage
+/frontend/dist
 /node_modules
 /build
 /tmp
@@ -18,6 +21,10 @@ lerna-debug.log*
 .env.development
 .env.test
 .env.production
+.env.local
+backend/.env
+frontend/.env
+frontend/.env.local
 
 # temp directory
 .temp

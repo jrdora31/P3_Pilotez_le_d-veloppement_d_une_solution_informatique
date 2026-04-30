@@ -1,7 +1,19 @@
 {
   "name": "projet-3",
   "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
+    "backend:build": "npm run build --workspace backend",
+    "backend:dev": "npm run start:dev --workspace backend",
+    "backend:start": "npm run start --workspace backend",
+    "backend:test": "npm run test --workspace backend",
+    "backend:test:e2e": "npm run test:e2e --workspace backend",
+    "frontend:build": "npm run build --workspace frontend",
+    "frontend:dev": "npm run dev --workspace frontend",
+    "frontend:preview": "npm run preview --workspace frontend",
     "swagger": "node scripts/serve-swagger.mjs",
     "openapi:lint": "npx @redocly/cli lint docs/OpenAPI/openapi.yaml"
   }
