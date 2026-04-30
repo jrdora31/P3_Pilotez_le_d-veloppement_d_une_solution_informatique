@@ -25,7 +25,10 @@ function isInsideDocs(filePath) {
 
 function resolveRequestPath(requestUrl = "/") {
   const url = new URL(requestUrl, `http://${host}`);
-  const pathname = url.pathname === "/" ? "/swagger.html" : url.pathname;
+  const pathname =
+    url.pathname === "/" || url.pathname === "/swagger.html"
+      ? "/OpenAPI/swagger.html"
+      : url.pathname;
   const filePath = resolve(docsDir, `.${normalize(decodeURIComponent(pathname))}`);
 
   if (!isInsideDocs(filePath)) {
@@ -54,7 +57,7 @@ const server = createServer((request, response) => {
 
 function listen(port, attemptsLeft = 20) {
   server.listen(port, host, () => {
-    console.log(`Swagger UI: http://${host}:${port}/swagger.html`);
+    console.log(`Swagger UI: http://${host}:${port}/OpenAPI/swagger.html`);
   });
 
   server.once("error", (error) => {
