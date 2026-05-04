@@ -1,0 +1,7 @@
+{
+  "coverage-gutters.coverageFileNames": [
+    "backend/coverage/lcov.info",
+    "frontend/coverage/lcov.info"
+  ],
+  "coverage-gutters.showLineCoverage": true
+}

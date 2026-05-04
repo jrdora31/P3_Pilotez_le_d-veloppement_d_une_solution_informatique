@@ -3,6 +3,8 @@
 /backend/dist
 /backend/coverage
 /frontend/dist
+/frontend/coverage
+/frontend/node_modules/.vite
 /node_modules
 /build
 /tmp

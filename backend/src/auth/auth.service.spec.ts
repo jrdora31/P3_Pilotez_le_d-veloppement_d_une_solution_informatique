@@ -85,6 +85,16 @@ describe("AuthService", () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it("refuse une confirmation de mot de passe differente", async () => {
+    await expect(
+      authService.register({
+        email: "claire.marie@datashare.fr",
+        password: "StrongPassword123!",
+        passwordConfirmation: "DifferentPassword123!"
+      })
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it("connecte un utilisateur avec des identifiants valides", async () => {
     const passwordHash = await hash("StrongPassword123!", 12);
     usersService.findByEmailWithPassword.mockResolvedValue({

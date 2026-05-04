@@ -8,6 +8,9 @@
     "bierner.markdown-mermaid",
     "mtxr.sqltools",
     "mtxr.sqltools-driver-pg",
-    "ms-azuretools.vscode-docker"
+    "ms-azuretools.vscode-docker",
+    "orta.vscode-jest",
+    "vitest.explorer",
+    "ryanluker.vscode-coverage-gutters"
   ]
 }
