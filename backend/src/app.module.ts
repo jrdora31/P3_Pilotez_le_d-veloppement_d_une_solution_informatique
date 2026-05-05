@@ -2,6 +2,9 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthModule } from "./auth/auth.module";
+import { FileRecord } from "./files/file-record.entity";
+import { FilesModule } from "./files/files.module";
+import { ShareLink } from "./files/share-link.entity";
 import { User } from "./users/user.entity";
 import { UsersModule } from "./users/users.module";
 
@@ -23,12 +26,13 @@ import { UsersModule } from "./users/users.module";
           configService.get<string>("DATABASE_SSL", "false") === "true"
             ? { rejectUnauthorized: false }
             : false,
-        entities: [User],
+        entities: [User, FileRecord, ShareLink],
         synchronize: configService.get<string>("TYPEORM_SYNCHRONIZE", "true") === "true"
       })
     }),
     UsersModule,
-    AuthModule
+    AuthModule,
+    FilesModule
   ]
 })
 export class AppModule {}
