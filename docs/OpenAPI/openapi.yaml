@@ -120,7 +120,9 @@ paths:
 
   /files:
     post:
-      security: []
+      security:
+        - {}
+        - bearerAuth: []
       tags:
         - Files
       summary: Téléverser un fichier et générer un lien de partage
@@ -128,7 +130,8 @@ paths:
         Cette route permet de téléverser un fichier depuis la page d'accueil.
         L'utilisateur peut être connecté ou non.
         Un mot de passe de partage et une durée d'expiration peuvent être
-        ajoutés de manière optionnelle.
+        ajoutés de manière optionnelle. Les utilisateurs connectés peuvent
+        associer des tags au fichier téléversé.
       operationId: uploadFile
       requestBody:
         required: true
@@ -145,13 +148,24 @@ paths:
                   description: Fichier à téléverser
                 sharePassword:
                   type: string
+                  minLength: 6
                   nullable: true
                   description: Mot de passe optionnel pour protéger le lien
                 expirationDays:
                   type: integer
+                  minimum: 1
+                  maximum: 7
+                  default: 7
                   nullable: true
                   description: Nombre de jours avant expiration du lien
                   example: 7
+                tags:
+                  type: array
+                  nullable: true
+                  description: Tags optionnels, réservés aux utilisateurs connectés
+                  items:
+                    type: string
+                    maxLength: 30
             encoding:
               file:
                 contentType: application/octet-stream
@@ -193,7 +207,7 @@ paths:
               - all
               - active
               - expired
-            default: all
+            default: active
       responses:
         '200':
           description: Liste des fichiers retournée avec succès
@@ -464,6 +478,11 @@ components:
         mimeType:
           type: string
           example: image/jpeg
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 30
         shareToken:
           type: string
           nullable: true
@@ -502,6 +521,7 @@ components:
         - originalName
         - size
         - mimeType
+        - tags
         - createdAt
       properties:
         id:
@@ -518,6 +538,11 @@ components:
           format: int64
         mimeType:
           type: string
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 30
         createdAt:
           type: string
           format: date-time
