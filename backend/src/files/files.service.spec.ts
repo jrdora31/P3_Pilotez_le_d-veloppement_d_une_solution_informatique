@@ -89,6 +89,41 @@ describe("FilesService", () => {
     expect(response.shareLink.url).toContain("/download/");
   });
 
+  it("génère le lien de partage avec une seule URL publique même si le CORS a plusieurs origines", async () => {
+    service = new FilesService(
+      filesRepository as unknown as Repository<FileRecord>,
+      shareLinksRepository as unknown as Repository<ShareLink>,
+      storageService as unknown as LocalFileStorageService,
+      {
+        get: jest.fn((key: string, defaultValue?: string) => {
+          if (key === "FRONTEND_ORIGIN") {
+            return "http://localhost:5173,http://127.0.0.1:5173";
+          }
+
+          return defaultValue;
+        })
+      } as unknown as ConfigService
+    );
+    const savedFile = createFile();
+    filesRepository.save.mockResolvedValue(savedFile);
+    shareLinksRepository.findOne.mockResolvedValue(null);
+    shareLinksRepository.save.mockImplementation(async (shareLink) => shareLink as ShareLink);
+
+    const response = await service.upload(
+      {
+        originalname: "contrat.pdf",
+        filename: "storage-name.pdf",
+        mimetype: "application/pdf",
+        size: 120000,
+        path: "uploads/storage-name.pdf"
+      },
+      {},
+      null
+    );
+
+    expect(response.shareLink.url).toBe(`http://localhost:5173/download/${response.shareLink.token}`);
+  });
+
   it("refuse les tags pour un upload anonyme", async () => {
     await expect(
       service.upload(

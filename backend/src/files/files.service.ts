@@ -304,8 +304,23 @@ export class FilesService {
   }
 
   private buildShareUrl(token: string): string {
-    const frontendOrigin = this.configService.get<string>("FRONTEND_ORIGIN", "http://localhost:5173");
-    return `${frontendOrigin.replace(/\/$/, "")}/download/${token}`;
+    return `${this.getFrontendPublicUrl()}/download/${token}`;
+  }
+
+  private getFrontendPublicUrl(): string {
+    const configuredPublicUrl = this.configService.get<string>("FRONTEND_PUBLIC_URL")?.trim();
+
+    if (configuredPublicUrl) {
+      return configuredPublicUrl.replace(/\/$/, "");
+    }
+
+    const firstAllowedOrigin = this.configService
+      .get<string>("FRONTEND_ORIGIN", "http://localhost:5173")
+      .split(/[,\s]+/)
+      .map((origin) => origin.trim())
+      .filter(Boolean)[0];
+
+    return (firstAllowedOrigin ?? "http://localhost:5173").replace(/\/$/, "");
   }
 
   private isExpired(shareLink: Pick<ShareLink, "expiresAt">): boolean {

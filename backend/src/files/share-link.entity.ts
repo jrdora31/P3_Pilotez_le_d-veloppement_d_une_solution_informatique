@@ -20,7 +20,7 @@ export class ShareLink {
   @Column({ unique: true })
   token!: string;
 
-  @Column({ name: "password_hash", nullable: true, select: false })
+  @Column({ name: "password_hash", type: "varchar", nullable: true, select: false })
   passwordHash!: string | null;
 
   @Column({ name: "expires_at", type: "timestamp", nullable: true })
