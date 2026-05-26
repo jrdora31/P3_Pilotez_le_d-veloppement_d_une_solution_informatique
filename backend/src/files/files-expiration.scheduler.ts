@@ -2,6 +2,10 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { FilesService } from "./files.service";
 
+const DEFAULT_PURGE_INTERVAL_HOURS = 24;
+const HOUR_IN_MS = 60 * 60 * 1000;
+const MIN_PURGE_INTERVAL_MS = 1000;
+
 @Injectable()
 export class FilesExpirationScheduler implements OnModuleInit, OnModuleDestroy {
   private interval: NodeJS.Timeout | null = null;
@@ -16,11 +20,7 @@ export class FilesExpirationScheduler implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    const intervalHours = Number.parseInt(
-      this.configService.get<string>("FILE_PURGE_INTERVAL_HOURS", "24"),
-      10
-    );
-    const intervalMs = Math.max(intervalHours, 1) * 60 * 60 * 1000;
+    const intervalMs = this.resolveIntervalMs();
 
     this.interval = setInterval(() => {
       void this.filesService.purgeExpiredFiles();
@@ -32,5 +32,34 @@ export class FilesExpirationScheduler implements OnModuleInit, OnModuleDestroy {
     if (this.interval) {
       clearInterval(this.interval);
     }
+  }
+
+  private resolveIntervalMs(): number {
+    const configuredIntervalMs = this.parsePositiveNumber(
+      this.configService.get<string>("FILE_PURGE_INTERVAL_MS")
+    );
+
+    if (configuredIntervalMs !== null) {
+      return Math.max(Math.round(configuredIntervalMs), MIN_PURGE_INTERVAL_MS);
+    }
+
+    const configuredIntervalHours =
+      this.parsePositiveNumber(
+        this.configService.get<string>(
+          "FILE_PURGE_INTERVAL_HOURS",
+          String(DEFAULT_PURGE_INTERVAL_HOURS)
+        )
+      ) ?? DEFAULT_PURGE_INTERVAL_HOURS;
+
+    return Math.max(configuredIntervalHours, 1) * HOUR_IN_MS;
+  }
+
+  private parsePositiveNumber(value: string | undefined): number | null {
+    if (!value) {
+      return null;
+    }
+
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null;
   }
 }
