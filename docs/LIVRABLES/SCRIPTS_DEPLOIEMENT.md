@@ -235,10 +235,3 @@ Si le projet devait être déployé en production, la procédure recommandée se
 ## Conclusion
 
 Pour le MVP, les "scripts de déploiement" correspondent principalement aux scripts npm d'installation, validation, build et lancement. Ils sont suffisants pour rendre le projet exécutable et vérifiable par un évaluateur. Un script de déploiement vers un hébergeur précis pourra être ajouté plus tard, quand l'environnement cible sera défini.
-
-
-| élément | technologie choisie | alternatives | justification |
-| ------- | ------------------- | ------------ | ------------- |
-| a       | b                   | c            | d             |
-| a       | b                   | c            | d             |
-   

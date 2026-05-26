@@ -10,15 +10,16 @@ Le MVP ajoute aussi un espace utilisateur authentifié. Un utilisateur connecté
 
 Les fonctionnalités principales couvertes sont :
 
-- téléversement de fichier depuis le navigateur ;
-- génération d'un lien public de partage ;
-- téléchargement public depuis un token ;
-- protection optionnelle du lien par mot de passe ;
-- expiration des liens ;
-- purge des fichiers expirés ;
-- inscription et connexion utilisateur ;
-- espace personnel avec historique des fichiers ;
-- tags réservés aux utilisateurs connectés ;
+- upload avec compte, avec génération d'un lien de téléchargement unique (US01) ;
+- téléchargement via un lien public unique (US02) ;
+- création de compte utilisateur (US03) ;
+- connexion utilisateur avec JWT (US04) ;
+- consultation de l'historique des fichiers envoyés (US05) ;
+- suppression d'un fichier par son propriétaire (US06) ;
+- upload anonyme avec lien temporaire (US07) ;
+- gestion des tags pour les fichiers d'un utilisateur connecté (US08) ;
+- ajout d'un mot de passe pour protéger un fichier partagé (US09) ;
+- expiration automatique des fichiers et purge des données associées (US10) ;
 - documentation API OpenAPI/Swagger ;
 - suivi qualité, sécurité, performance et maintenance.
 
@@ -30,15 +31,24 @@ Le schéma d'architecture de la solution logicielle est disponible dans :
 docs/Architecture/schéma d’architecture de la solution logicielle.drawio.svg
 ```
 
-Le schéma existant est complet pour représenter l'architecture principale du MVP. Il montre les composants essentiels : l'utilisateur, le frontend React/TypeScript, le backend NestJS, les échanges HTTPS/JSON, l'authentification JWT, la base PostgreSQL et le stockage local des fichiers téléversés.
+### Lecture du schéma d'architecture
 
-Pour une documentation encore plus précise, le schéma peut être complété textuellement par trois éléments déjà présents dans l'implémentation :
+Le schéma se lit de gauche à droite. L'utilisateur interagit d'abord avec le frontend React/TypeScript depuis son navigateur. Ce frontend contient les pages visibles de l'application : connexion, inscription, téléversement, téléchargement public et espace personnel.
 
-- TypeORM assure la communication entre le backend NestJS et PostgreSQL ;
-- Multer gère la réception des fichiers `multipart/form-data` côté backend ;
-- un scheduler backend déclenche automatiquement la purge des fichiers expirés.
+Le frontend communique ensuite avec le backend NestJS via des requêtes HTTP. La plupart des échanges utilisent du JSON ; l'upload utilise `multipart/form-data`, le format standard pour envoyer un fichier avec ses options.
 
-Ces compléments ne remettent pas en cause le schéma actuel. Ils détaillent simplement des mécanismes internes qui peuvent alourdir le dessin si on les ajoute visuellement.
+Le backend centralise la logique métier : validation des DTO, authentification, gestion des fichiers, génération des liens publics, vérification des expirations et purge des fichiers expirés. Il dialogue avec PostgreSQL pour les données structurées et avec le stockage local pour les fichiers physiques.
+
+Le schéma distingue volontairement deux types de stockage :
+
+- PostgreSQL conserve les données métier : utilisateurs, métadonnées de fichiers et liens de partage ;
+- le disque local du backend conserve le contenu réel des fichiers téléversés.
+
+Trois mécanismes internes complètent le schéma sans l'alourdir :
+
+- TypeORM est l'ORM entre NestJS et PostgreSQL. Il mappe les entités `User`, `FileRecord` et `ShareLink` avec les tables SQL, puis fournit des repositories utilisés par lesl services. Configuration : `backend/src/app.module.ts` et `TypeOrmModule.forFeature(...)` dans les modules métier.
+- Multer reçoit les fichiers envoyés en `multipart/form-data`. Il est configuré dans `backend/src/files/files.module.ts` pour le dossier d'upload, le nom physique, la limite de taille et les extensions interdites.
+- `FilesExpirationScheduler` lance la purge automatique. Il est dans `backend/src/files/files-expiration.scheduler.ts`, déclaré dans `FilesModule`, puis activé au chargement du module via `onModuleInit()`. Par défaut, il appelle `filesService.purgeExpiredFiles()` toutes les 24 heures.
 
 ### Vue d'ensemble
 
@@ -91,7 +101,17 @@ Le schéma du modèle de données est disponible dans :
 docs/Architecture/Schema_structure_BDD_MCD.drawio.svg
 ```
 
-Le modèle repose sur trois entités principales : `users`, `files` et `share_links`. Le schéma graphique représente correctement les relations principales. Pour être parfaitement aligné avec le code actuel, il faut aussi mentionner le champ `tags` présent dans l'entité `files`, utilisé pour l'espace personnel des utilisateurs connectés.
+### Lecture du schéma de données
+
+Le schéma de données représente trois tables principales : `users`, `files` et `share_links`.
+
+La table `users` contient les comptes de l'application. Un utilisateur peut posséder plusieurs fichiers, mais cette relation reste optionnelle côté fichier : un fichier peut aussi être anonyme si le téléversement a été fait sans connexion.
+
+La table `files` contient les métadonnées des fichiers téléversés. Elle ne stocke pas le contenu binaire du fichier, mais les informations nécessaires pour le retrouver sur le disque local : nom d'origine, nom de stockage, type MIME, taille et chemin de stockage. Elle contient aussi `owner_id` pour rattacher le fichier à un utilisateur connecté, ainsi que `tags` pour l'organisation dans l'espace personnel.
+
+La table `share_links` contient les liens publics associés aux fichiers. Chaque lien appartient à un fichier et porte un token public unique. Le lien peut aussi contenir un hash de mot de passe et une date d'expiration. Lorsqu'un fichier est supprimé, ses liens sont supprimés en cascade.
+
+Le schéma graphique représente donc la séparation entre le compte utilisateur, le fichier téléversé et le lien public de partage. Cette séparation permet de gérer à la fois les uploads anonymes, les fichiers rattachés à un compte et les liens publics expirables ou protégés par mot de passe.
 
 ### Table `users`
 
@@ -118,7 +138,7 @@ La table `files` stocke les métadonnées des fichiers téléversés.
 | `original_name` | VARCHAR |  | nom d'origine du fichier |
 | `storage_name` | VARCHAR |  | nom physique généré pour le stockage |
 | `mime_type` | VARCHAR |  | type MIME du fichier |
-| `size` | BIGINT |  | taille du fichier en octets |
+| `size` | INTEGER |  | taille du fichier en octets |
 | `storage_path` | VARCHAR |  | chemin local du fichier stocké |
 | `tags` | JSON/simple-json |  | tags associés au fichier, réservés aux utilisateurs connectés |
 | `created_at` | TIMESTAMP |  | date de téléversement |
@@ -150,21 +170,46 @@ Le lien public ne donne pas accès directement à la base de données. Il sert u
 
 ## Choix techniques
 
-Les choix techniques privilégient une stack TypeScript homogène, simple à maintenir et adaptée à un MVP web.
+Les choix techniques privilégient une stack TypeScript homogène, simple à maintenir et adaptée à un MVP web. L'objectif n'était pas d'utiliser les technologies les plus complexes, mais de choisir des outils cohérents avec les besoins : téléversement de fichiers, liens publics, comptes utilisateurs, API documentée, tests et possibilité d'évolution.
 
 | Besoin | Technologie choisie | Alternatives possibles | Justification |
 | --- | --- | --- | --- |
-| Interface web | React + TypeScript + Vite | Vue, Angular, Next.js | stack rapide pour construire des pages interactives et testables |
-| Routage frontend | React Router | routage manuel, Next.js router | routes simples pour upload, login, compte et téléchargement |
-| API backend | NestJS + TypeScript | Express, Fastify, Spring Boot | structure modulaire, DTO, guards, tests faciles à organiser |
-| Base de données | PostgreSQL | MySQL, SQLite, MongoDB | base relationnelle robuste pour utilisateurs, fichiers et liens |
-| ORM | TypeORM | Prisma, Knex | intégration directe avec NestJS et entités TypeScript |
-| Authentification | JWT + Passport | sessions serveur, OAuth | compatible API REST et routes protégées |
-| Hash de mots de passe | bcryptjs | argon2, bcrypt natif | solution éprouvée et facile à intégrer au MVP |
-| Upload | Multer | Busboy, stockage direct cloud | solution standard pour `multipart/form-data` dans NestJS/Express |
-| Documentation API | OpenAPI + Swagger UI | Postman, documentation manuelle | contrat clair et vérifiable avec lint |
-| Tests backend | Jest + Supertest | Vitest, Mocha | outillage standard NestJS |
-| Tests frontend | Vitest + Testing Library | Jest, Cypress | tests rapides orientés composants et parcours |
+| Interface web | React + TypeScript + Vite | Vue, Angular, Next.js | stack légère et rapide pour construire une interface interactive sans imposer un framework fullstack |
+| Routage frontend | React Router | routage manuel, Next.js router | routes claires pour les pages `/`, `/login`, `/register`, `/account` et `/download/:token` |
+| API backend | NestJS + TypeScript | Express, Fastify, Spring Boot | structure modulaire, DTO, guards, services, scheduler et tests faciles à organiser |
+| Base de données | PostgreSQL | MySQL, SQLite, MongoDB | modèle relationnel adapté aux utilisateurs, fichiers, liens et contraintes d'unicité |
+| ORM | TypeORM | Prisma, Knex | intégration directe avec NestJS et mapping explicite des entités TypeScript |
+| Authentification | JWT + Passport | sessions serveur, OAuth | solution stateless adaptée à une API REST et aux routes protégées |
+| Hash de mots de passe | bcryptjs | argon2, bcrypt natif | solution éprouvée, portable et suffisante pour le MVP avec un coût configuré à 12 |
+| Upload | Multer | Busboy, stockage direct cloud | solution standard pour recevoir du `multipart/form-data` dans l'écosystème NestJS/Express |
+| Stockage fichiers | Disque local backend | S3, Cloudinary, Azure Blob | choix simple pour un MVP local, avec une évolution possible vers un stockage objet |
+| Documentation API | OpenAPI + Swagger UI | Postman, documentation manuelle | contrat API versionnable, consultable et vérifiable par lint |
+| Tests backend | Jest + Supertest | Vitest, Mocha | outillage standard NestJS pour tests unitaires, services, contrôleurs et e2e API |
+| Tests frontend | Vitest + Testing Library | Jest, Cypress | tests rapides orientés composants, appels API et comportements utilisateur |
+
+### Justification détaillée des choix
+
+La stack TypeScript de bout en bout simplifie la cohérence entre frontend, backend, DTO et modèles de réponse.
+
+React avec Vite suffit pour une interface interactive sans imposer un framework fullstack. NestJS apporte une structure claire côté API avec modules, contrôleurs, services, DTO et guards.
+
+PostgreSQL convient au modèle relationnel du projet : utilisateurs, fichiers, liens de partage, clés étrangères et contraintes d'unicité. TypeORM sert de couche d'accès aux données et garde les entités proches du code TypeScript.
+
+JWT avec Passport permet de protéger les routes privées sans session serveur. Le même backend peut donc gérer les visiteurs anonymes et les utilisateurs connectés.
+
+Le stockage local des fichiers est un choix de MVP : simple à tester et suffisant pour la soutenance. Une production réelle demanderait plutôt un stockage objet, des sauvegardes et un scan antivirus.
+
+OpenAPI, Swagger, Jest, Supertest, Vitest et Testing Library ont été choisis pour documenter et vérifier les parcours critiques : authentification, upload, lien public, téléchargement protégé, espace utilisateur, suppression et purge.
+
+### Choix assumés et limites
+
+Certains choix sont acceptables pour un MVP mais devront être renforcés en production :
+
+- le stockage local devra être remplacé par un stockage objet ;
+- `TYPEORM_SYNCHRONIZE` devra être désactivé au profit de migrations ;
+- la purge manuelle devra être réservée à un rôle administrateur ;
+- un antivirus ou une vérification plus poussée des fichiers devra être ajouté ;
+- une CI/CD devra automatiser les tests, builds, lint OpenAPI et audits.
 
 ## API REST
 
@@ -221,12 +266,12 @@ Les protections principales sont déjà intégrées au backend :
 - expiration des liens et réponse `410 Gone` pour les liens expirés ;
 - purge des fichiers expirés et de leurs métadonnées.
 
-Le scan de dépendances documenté le 2026-05-11 indique :
+Le scan de dépendances documenté le 2026-05-26 indique :
 
-- `npm audit --omit=dev` : 0 vulnérabilité de production ;
-- `npm audit` : 1 vulnérabilité `high` dans une dépendance transitive de développement liée à `fast-uri`.
+- `npm audit` : 0 vulnérabilité ;
+- `npm audit --omit=dev` : 0 vulnérabilité de production.
 
-La priorité de sécurité restante est de corriger cette vulnérabilité de développement par une mise à jour contrôlée, puis de relancer les tests et builds.
+Les vulnérabilités précédemment observées dans des dépendances transitives de développement ont été corrigées par mise à jour contrôlée, puis validées par les tests et les builds. Le risque résiduel principal n'est donc plus le scan npm, mais les limites assumées du MVP : stockage local, absence de rôle administrateur dédié et absence de scan antivirus des fichiers.
 
 ## Qualité, tests et maintenance
 
@@ -253,15 +298,15 @@ npm run frontend:test
 npm run frontend:coverage
 ```
 
-Derniers résultats documentés le 2026-05-11 :
+Derniers résultats documentés le 2026-05-26 :
 
 | Zone | Résultat |
 | --- | --- |
-| Backend coverage | 7 suites réussies, 24 tests réussis, 62,83 % statements |
-| Frontend coverage | 3 fichiers de tests réussis, 19 tests réussis, 64,57 % statements |
-| Backend e2e | 1 suite réussie, 5 tests e2e réussis |
+| Backend coverage | 13 suites réussies, 42 tests réussis, 90,87 % statements |
+| Frontend coverage | 3 fichiers de tests réussis, 23 tests réussis, 84,75 % statements |
+| Backend e2e | 2 suites réussies, 7 tests e2e réussis |
 
-L'objectif indicatif de 70 % de couverture globale n'est pas encore atteint. La stratégie documentée consiste à ne pas ajouter de tests artificiels, mais à couvrir en priorité les parcours critiques : upload, lien public, téléchargement protégé, suppression et purge.
+L'objectif indicatif de 70 % de couverture globale est atteint côté backend et frontend.
 
 ### Performance
 
@@ -271,17 +316,26 @@ Le suivi de performance est documenté dans :
 docs/LIVRABLES/quality-maintenance/PERF.md
 ```
 
-Les budgets frontend sont respectés au dernier contrôle documenté :
+Les budgets frontend sont respectés au dernier contrôle documenté le 2026-05-26 :
 
-| Mesure | Résultat 2026-05-11 |
+| Mesure | Résultat 2026-05-26 |
 | --- | ---: |
 | JavaScript initial brut | 238,01 kB |
 | JavaScript initial gzip | 74,31 kB |
 | CSS brut | 6,35 kB |
 | CSS gzip | 1,93 kB |
-| Build Vite | réussi en 2,14 s |
+| Build Vite | réussi en 2,04 s |
 
-Les endpoints backend à surveiller en priorité sont `POST /files`, `GET /share-links/:token`, `POST /share-links/:token/download` et `GET /files`.
+Le test k6 du 2026-05-26 sur `GET /share-links/:token` est également validé :
+
+| Mesure backend | Résultat | Budget | Statut |
+| --- | ---: | ---: | --- |
+| Requêtes exécutées | 150 | indicatif | OK |
+| Erreurs HTTP | 0,00 % | < 1 % | OK |
+| Temps de réponse moyen | 2,72 ms | indicatif | OK |
+| Temps de réponse p95 | 3,21 ms | < 500 ms | OK |
+
+Les uploads de `100 Ko`, `5 Mo` et `50 Mo` ont aussi été testés avec succès sur `POST /files`. Les endpoints backend à surveiller en priorité restent `POST /files`, `GET /share-links/:token`, `POST /share-links/:token/download` et `GET /files`.
 
 ### Maintenance
 
@@ -301,6 +355,7 @@ npm run backend:coverage
 npm run frontend:coverage
 npm run backend:build
 npm run frontend:build
+npm run openapi:lint
 npm audit --omit=dev
 ```
 
@@ -323,6 +378,7 @@ Les commandes principales sont :
 
 ```bash
 npm install
+npm run db:up
 npm run backend:dev
 npm run frontend:dev
 npm run backend:build
@@ -330,6 +386,7 @@ npm run frontend:build
 npm run backend:start
 npm run frontend:preview
 npm run swagger
+npm run openapi:lint
 ```
 
 Le document dédié est disponible dans :
@@ -342,7 +399,7 @@ Le projet est actuellement un MVP local. Il ne contient pas encore de script de 
 
 ## Utilisation de l'IA
 
-L'IA a été utilisée comme assistance au développement, sous pilotage du développeur et à partir de prompts rédigés pour guider les tâches. Son usage s'est inscrit dans une approche de vibe coding, avec une supervision humaine continue.
+L'IA a été utilisée comme assistance au développement, sous pilotage du développeur et à partir de prompts rédigés pour guider les tâches. Son usage s'est inscrit dans une approche de développement assisté par IA, avec une supervision humaine continue.
 
 Les principaux usages ont été :
 
@@ -355,9 +412,18 @@ Les principaux usages ont été :
 
 L'IA n'a pas remplacé la validation du projet. Les propositions de code, de tests et de documentation ont été relues, ajustées et vérifiées par le développeur selon les besoins du MVP.
 
+Le pilotage humain a porté sur :
+
+- la définition des fonctionnalités à construire ;
+- la vérification de la cohérence avec les spécifications ;
+- l'exécution ou la relecture des tests ;
+- la correction des incohérences détectées ;
+- la rédaction et la sélection des éléments à conserver dans les livrables.
+- l'orchestration globale du projet dans la répartition des tâches entre les différents agents IA.
+
 ### Apports constatés
 
-L'apport principal a été un gain de temps monstrueux sur le code. L'assistance a permis d'avancer plus vite sur la structure des fonctionnalités, les corrections, les tests et les documents de livraison.
+L'apport principal a été un gain de temps important sur le code. L'assistance a permis d'avancer plus vite sur la structure des fonctionnalités, les corrections, les tests et les documents de livraison.
 
 Pour la rédaction des documents, l'aide a également été intéressante : elle a facilité la mise en forme, la synthèse et l'organisation des informations déjà présentes dans le projet.
 
@@ -373,14 +439,12 @@ Le projet couvre le périmètre d'un MVP. Pour une mise en production réelle, p
 
 - ajouter une CI/CD ;
 - définir un hébergeur cible ;
-- introduire des migrations TypeORM ;
+- introduire des migrations (changements de schéma de BDD) TypeORM ;
 - remplacer le stockage local par un stockage objet ;
-- ajouter une sauvegarde coordonnée de PostgreSQL et des fichiers ;
 - ajouter un scan antivirus des fichiers téléversés ;
 - créer un rôle administrateur pour la route de purge ;
-- renforcer les tests e2e sur les fichiers et liens publics ;
-- atteindre ou dépasser l'objectif indicatif de 70 % de couverture ;
-- produire des mesures backend réelles avec k6 ou un outil équivalent.
+- renforcer les tests e2e sur les scénarios non encore couverts ;
+- élargir les mesures k6 à d'autres endpoints critiques.
 
 ## Annexes
 

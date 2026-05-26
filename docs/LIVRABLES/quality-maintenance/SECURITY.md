@@ -1,6 +1,6 @@
 # Garantie de sécurité
 
-Dernière mise à jour : 2026-05-11.
+Dernière mise à jour : 2026-05-26.
 
 ## Objectif du document
 

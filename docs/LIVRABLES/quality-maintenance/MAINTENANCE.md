@@ -123,12 +123,12 @@ Exemples :
 
 En local, c'est pratique car la base sert au développement. Sur une base partagée ou hébergée, c'est risqué : un simple changement de code peut modifier la structure de la base pour tout le monde. Dans ce cas, il faudrait utiliser `TYPEORM_SYNCHRONIZE=false` et gérer les changements avec des migrations.
 
-## Etat connu au 2026-05-11
+## Etat connu au 2026-05-26
 
 Dernier contrôle documenté :
 
+- `npm audit` : 0 vulnérabilité ;
 - `npm audit --omit=dev` : 0 vulnérabilité de production ;
-- `npm audit` : 1 vulnérabilité `high` dans `fast-uri`, dépendance transitive de développement via `@nestjs/cli` ;
 - tests backend, frontend, e2e et builds : réussis.
 
-La vulnérabilité connue concerne l'outillage de développement, pas le fonctionnement runtime de l'application. Elle reste à corriger lors d'une mise à jour contrôlée.
+Les vulnérabilités précédemment détectées dans des dépendances transitives de développement ont été corrigées par mise à jour contrôlée, puis validées par les tests et builds.
