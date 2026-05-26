@@ -213,9 +213,11 @@ Le MVP DataShare repose sur les fonctionnalités suivantes.
 | La purge peut être déclenchée manuellement via une route protégée. | `MaintenanceController` vérifie l'appel à `purgeExpiredFiles`. | Partiel |
 | La réponse de purge indique le nombre de fichiers, liens et octets supprimés. | `FilesService.purgeExpiredFiles` vérifie `purgedFiles`, `purgedShareLinks` et `purgedBytes`. | Validé |
 
-## Scénarios end-to-end recommandés
+## Scénarios end-to-end
 
-Le minimum attendu est 2 à 3 scénarios critiques. Les scénarios suivants sont les plus utiles pour DataShare.
+Il y a en tout 9 scénarios, voici les résultats : 
+
+![Couverture E2E du 2026-05-26](screenshots/E2E_tests_result.png "E2E_tests_result.png")
 
 ### Scénario e2e 1 - Authentification
 
@@ -292,18 +294,6 @@ Critère de réussite :
 - Le fichier supprimé n'apparaît plus dans la liste active.
 - Un autre utilisateur ne peut pas supprimer ce fichier.
 
-## Seuil de couverture
-
-Objectif indicatif : 70 % de couverture globale minimum.
-
-Etat au 2026-05-26 :
-
-- Backend statements : 90,87 %.
-- Frontend statements : 84,75 %.
-
-Conclusion :
-
-Le seuil de 70 % est atteint côté backend et côté frontend. Les améliorations restantes concernent surtout des scénarios complémentaires, notamment les erreurs de l'espace utilisateur, la suppression et les parcours e2e fichiers.
 
 ## Captures de couverture à produire
 
@@ -333,14 +323,6 @@ Rapport à ouvrir :
 frontend/coverage/index.html
 ```
 
-Procédure de capture :
-
-1. Lancer la commande de couverture.
-2. Ouvrir le rapport HTML correspondant.
-3. Capturer le tableau récapitulatif `All files`.
-4. Nommer la capture avec la date, par exemple `backend-coverage-2026-05-11.png`.
-5. Ajouter la capture au dossier de preuves choisi pour la soutenance, par exemple `docs/quality-maintenance/evidence/`.
-
 ## Routine de validation avant livraison
 
 Avant de considérer une modification comme prête, exécuter :
@@ -351,14 +333,6 @@ npm run backend:test:e2e
 npm run frontend:test
 npm run backend:build
 npm run frontend:build
-```
-
-Avant une soutenance ou une livraison plus formelle, exécuter aussi :
-
-```bash
-npm run backend:coverage
-npm run frontend:coverage
-npm audit --omit=dev
 ```
 
 Critère de validation :
