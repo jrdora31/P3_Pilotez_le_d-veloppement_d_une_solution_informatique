@@ -29,7 +29,7 @@ Le projet répond aux besoins principaux suivants :
 | Authentification | JWT, Passport, bcryptjs | Connexion, routes protégées, hash des mots de passe |
 | Upload | Multer | Réception des fichiers `multipart/form-data` |
 | Tests | Jest, Vitest, Testing Library, Supertest | Tests backend, frontend et e2e |
-| Documentation | OpenAPI, Swagger, Markdown | Contrat API et livrables techniques |
+| Documentation | OpenAPI, Swagger, Markdown | Contrat API et documentation technique |
 
 ## Structure du repository
 
@@ -52,7 +52,7 @@ PROJET_3/
 `-- docs/
     |-- Architecture/
     |-- OpenAPI/
-    |-- LIVRABLES/
+    |-- documentation technique/
     |-- ressources_projet_3/
     `-- AI docs/
 ```
@@ -140,7 +140,7 @@ npm run openapi:lint
 Les documents de suivi qualité sont dans :
 
 ```text
-docs/LIVRABLES/quality-maintenance/
+docs/documentation technique/quality-maintenance/
 ```
 
 Fichiers disponibles :
@@ -155,7 +155,7 @@ Fichiers disponibles :
 Les scripts de build et d'exécution sont définis dans le `package.json` racine. Pour le livrable, le document dédié est :
 
 ```text
-docs/LIVRABLES/SCRIPTS_DEPLOIEMENT.md
+docs/documentation technique/SCRIPTS_DEPLOIEMENT.md
 ```
 
 Le projet ne contient pas encore de script de déploiement vers un hébergeur précis, car aucun environnement de production cible n'est défini. En revanche, le repository contient les commandes nécessaires pour installer, tester, builder et lancer le projet de manière reproductible.

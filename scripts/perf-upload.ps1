@@ -1,6 +1,6 @@
 param(
   [string]$ApiUrl = "http://localhost:3000",
-  [string]$OutputPath = "docs/LIVRABLES/quality-maintenance/evidence/perf-upload-$(Get-Date -Format 'yyyy-MM-dd').json"
+  [string]$OutputPath = "docs/documentation technique/quality-maintenance/evidence/perf-upload-$(Get-Date -Format 'yyyy-MM-dd').json"
 )
 
 $ErrorActionPreference = "Stop"

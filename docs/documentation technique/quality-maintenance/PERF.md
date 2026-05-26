@@ -30,7 +30,7 @@ Commande exécutée :
 
 ```powershell
 k6 run `
-  --summary-export "docs/LIVRABLES/quality-maintenance/evidence/perf-k6-share-link-2026-05-26.json" `
+  --summary-export "docs/documentation technique/quality-maintenance/evidence/perf-k6-share-link-2026-05-26.json" `
   -e API_URL=http://localhost:3000 `
   -e SHARE_TOKEN=d9WUedXeKyxji9RWfDcY5Ym8 `
   "scripts/perf-share-link.k6.js"
@@ -54,7 +54,7 @@ Le test est validé. L'endpoint public de consultation d'un lien de partage rép
 Preuve générée :
 
 ```text
-docs/LIVRABLES/quality-maintenance/evidence/perf-k6-share-link-2026-05-26.json
+docs/documentation technique/quality-maintenance/evidence/perf-k6-share-link-2026-05-26.json
 ```
 
 ## Budget de performance côté front
@@ -138,7 +138,7 @@ Les trois uploads sont acceptés par l'API avec un statut `201`. Les temps reste
 Preuve générée :
 
 ```text
-docs/LIVRABLES/quality-maintenance/evidence/perf-upload-2026-05-26.json
+docs/documentation technique/quality-maintenance/evidence/perf-upload-2026-05-26.json
 ```
 
 ## Captures de logs ou métriques de performance
@@ -146,8 +146,8 @@ docs/LIVRABLES/quality-maintenance/evidence/perf-upload-2026-05-26.json
 Métriques serveur :
 
 ```text
-docs/LIVRABLES/quality-maintenance/evidence/perf-k6-share-link-2026-05-26.json
-docs/LIVRABLES/quality-maintenance/evidence/perf-upload-2026-05-26.json
+docs/documentation technique/quality-maintenance/evidence/perf-k6-share-link-2026-05-26.json
+docs/documentation technique/quality-maintenance/evidence/perf-upload-2026-05-26.json
 ```
 
 Métriques navigateur :
