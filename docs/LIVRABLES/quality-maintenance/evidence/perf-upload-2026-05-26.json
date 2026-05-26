@@ -1,0 +1,26 @@
+[
+  {
+    "sizeLabel": "100 Ko",
+    "sizeBytes": 102400,
+    "status": 201,
+    "durationMs": 99.67,
+    "token": "d9WUedXeKyxji9RWfDcY5Ym8",
+    "shareUrl": "http://localhost:5173/download/d9WUedXeKyxji9RWfDcY5Ym8"
+  },
+  {
+    "sizeLabel": "5 Mo",
+    "sizeBytes": 5242880,
+    "status": 201,
+    "durationMs": 48.21,
+    "token": "4y2TWujngQtKmil6g0Zstfdu",
+    "shareUrl": "http://localhost:5173/download/4y2TWujngQtKmil6g0Zstfdu"
+  },
+  {
+    "sizeLabel": "50 Mo",
+    "sizeBytes": 52428800,
+    "status": 201,
+    "durationMs": 135.35,
+    "token": "exUNWRoX-DKBFq6QajHLkSwy",
+    "shareUrl": "http://localhost:5173/download/exUNWRoX-DKBFq6QajHLkSwy"
+  }
+]
