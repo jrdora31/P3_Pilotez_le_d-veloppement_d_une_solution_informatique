@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, Param, Post, Res, StreamableFile } from "@nestjs/common";
+import { Body, Controller, Get, Header, HttpCode, HttpStatus, Param, Post, Res, StreamableFile } from "@nestjs/common";
 import { Response } from "express";
 import { DownloadFileDto } from "./dto/download-file.dto";
 import { ShareLinkPublic } from "./files-response.types";
@@ -15,6 +15,7 @@ export class ShareLinksController {
 
   @Post(":token/download")
   @Header("Content-Type", "application/octet-stream")
+  @HttpCode(HttpStatus.OK)
   async downloadSharedFile(
     @Param("token") token: string,
     @Body() downloadDto: DownloadFileDto,

@@ -86,6 +86,157 @@ describe("App", () => {
     expect(screen.getByText("http://localhost:5173/download/public-token")).toBeInTheDocument();
   });
 
+  it("téléverse un fichier connecté avec tags et copie le lien", async () => {
+    const viewer = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    saveAuth({
+      accessToken: "signed.jwt.token",
+      user
+    });
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: {
+        writeText
+      }
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        file: {
+          id: "4c7a2512-c0f1-40fa-827a-5ad6ddfcb475",
+          ownerId: user.id,
+          originalName: "contrat.pdf",
+          size: 120000,
+          mimeType: "application/pdf",
+          tags: ["finance", "projet"],
+          createdAt: "2026-01-01T10:00:00.000Z"
+        },
+        shareLink: {
+          id: "cd5b2ea6-dde8-45c1-8cfd-4f62756ac520",
+          token: "public-token",
+          url: "http://localhost:5173/download/public-token",
+          expiresAt: "2026-01-08T10:00:00.000Z",
+          passwordProtected: false,
+          createdAt: "2026-01-01T10:00:00.000Z"
+        }
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    renderApp("/");
+
+    fireEvent.change(screen.getByLabelText("Fichier"), {
+      target: {
+        files: [new File(["contenu"], "contrat.pdf", { type: "application/pdf" })]
+      }
+    });
+    await viewer.type(screen.getByLabelText("Tags"), "finance, projet");
+    await viewer.click(screen.getByRole("button", { name: "Générer le lien" }));
+    await viewer.click(await screen.findByRole("button", { name: "Copier" }));
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect((init.body as FormData).get("tags")).toBe(JSON.stringify(["finance", "projet"]));
+    expect(writeText).toHaveBeenCalledWith("http://localhost:5173/download/public-token");
+    expect(screen.getByText("Lien copié.")).toBeInTheDocument();
+  });
+
+  it("consulte un lien public et télécharge un fichier protégé", async () => {
+    const viewer = userEvent.setup();
+    const objectUrl = "blob:http://localhost/download";
+    const createObjectURL = vi.fn().mockReturnValue(objectUrl);
+    const revokeObjectURL = vi.fn();
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          fileName: "contrat.pdf",
+          fileSize: 120000,
+          message: null,
+          expiresAt: "2026-01-08T10:00:00.000Z",
+          passwordRequired: true,
+          status: "active"
+        })
+      )
+      .mockResolvedValueOnce(new Response(new Blob(["contenu"], { type: "application/pdf" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL,
+      revokeObjectURL
+    });
+
+    renderApp("/download/public-token");
+
+    expect(await screen.findByRole("heading", { name: "contrat.pdf" })).toBeInTheDocument();
+    await viewer.type(screen.getByLabelText("Mot de passe"), "secret1");
+    await viewer.click(screen.getByRole("button", { name: "Télécharger" }));
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://localhost:3000/share-links/public-token/download", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        password: "secret1"
+      })
+    });
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expect(anchorClick).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith(objectUrl);
+  });
+
+  it("affiche une erreur si le lien public est introuvable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          {
+            message: "Lien introuvable."
+          },
+          404
+        )
+      )
+    );
+
+    renderApp("/download/public-token");
+
+    expect(await screen.findByText("Lien introuvable.")).toBeInTheDocument();
+  });
+
+  it("affiche une erreur si le téléchargement public échoue", async () => {
+    const viewer = userEvent.setup();
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          jsonResponse({
+            fileName: "contrat.pdf",
+            fileSize: 120000,
+            message: null,
+            expiresAt: null,
+            passwordRequired: false,
+            status: "active"
+          })
+        )
+        .mockResolvedValueOnce(
+          jsonResponse(
+            {
+              message: "Mot de passe invalide."
+            },
+            401
+          )
+        )
+    );
+
+    renderApp("/download/public-token");
+
+    expect(await screen.findByRole("heading", { name: "contrat.pdf" })).toBeInTheDocument();
+    expect(screen.getByText("Aucune")).toBeInTheDocument();
+    await viewer.click(screen.getByRole("button", { name: "Télécharger" }));
+
+    expect(await screen.findByText("Mot de passe invalide.")).toBeInTheDocument();
+  });
+
   it("affiche l'historique de l'utilisateur connecté", async () => {
     saveAuth({
       accessToken: "signed.jwt.token",

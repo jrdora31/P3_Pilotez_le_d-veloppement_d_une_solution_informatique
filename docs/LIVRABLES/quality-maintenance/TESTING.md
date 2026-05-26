@@ -77,7 +77,7 @@ Résultat :
 
 ### Frontend coverage
 
-Résultat vérifié le 2026-05-11.
+Résultat vérifié le 2026-05-26.
 
 Commande exécutée :
 
@@ -88,31 +88,36 @@ npm run frontend:coverage
 Résultat :
 
 - 3 fichiers de tests réussis.
-- 19 tests réussis.
-- Couverture globale statements : 64,57 %.
-- Couverture globale branches : 46,42 %.
-- Couverture globale functions : 62,71 %.
-- Couverture globale lines : 65,15 %.
+- 23 tests réussis.
+- Couverture globale statements : 84,75 %.
+- Couverture globale branches : 73,57 %.
+- Couverture globale functions : 83,05 %.
+- Couverture globale lines : 85,52 %.
+
+**Couverture frontend Vitest du 2026-05-26**
+
+![Couverture frontend Vitest du 2026-05-26](screenshots/frontend_tests_result.png "Couverture frontend Vitest du 2026-05-26")
 
 Interprétation :
 
-Le frontend couvre déjà les appels API, le stockage de session et plusieurs parcours applicatifs dans `App.test.tsx`. L'objectif indicatif de 70 % n'est pas encore atteint au global.
+Le frontend dépasse désormais l'objectif indicatif de 70 % au global. Les tests couvrent les appels API, le stockage de session, l'authentification, l'upload anonyme, l'upload connecté avec tags, la copie de lien, l'espace utilisateur et les parcours de téléchargement public.
 
-Les zones prioritaires sont :
+Les zones qui restent les moins couvertes sont :
 
-- `DownloadPage.tsx`, actuellement non couverte ;
-- `UploadPage.tsx`, partiellement couverte ;
-- `AccountPage.tsx`, partiellement couverte ;
-- les branches d'erreur et d'état vide.
+- `AccountPage.tsx`, notamment la copie, la suppression et les erreurs de chargement ;
+- certaines branches d'erreur de `UploadPage.tsx` ;
+- quelques messages d'erreur génériques dans `api.ts`.
 
 Priorité d'amélioration :
 
-1. Ajouter un test de consultation d'un lien public actif.
-2. Ajouter un test de téléchargement protégé par mot de passe.
-3. Ajouter un test d'affichage d'un lien expiré ou introuvable.
-4. Ajouter des tests sur les erreurs d'upload et la suppression depuis l'espace utilisateur.
+1. Ajouter un test de suppression depuis l'espace utilisateur.
+2. Ajouter un test d'erreur de chargement de l'historique.
+3. Ajouter un test d'erreur d'upload.
+4. Ajouter un test d'état vide ou de fichier sans lien copiable.
 
 ### Backend end-to-end
+
+Résultat vérifié le 2026-05-26.
 
 Commande exécutée :
 
@@ -122,8 +127,8 @@ npm run backend:test:e2e
 
 Résultat :
 
-- 1 suite e2e réussie.
-- 5 tests e2e réussis.
+- 2 suites e2e réussies.
+- 7 tests e2e réussis.
 
 Scénarios couverts :
 
@@ -132,10 +137,15 @@ Scénarios couverts :
 - Les données invalides retournent `400`.
 - Des identifiants incorrects retournent `401`.
 - Un email déjà utilisé retourne `409`.
+- `POST /files` accepte un upload anonyme multipart et retourne un lien de partage.
+- `GET /share-links/:token` permet de consulter un lien public actif.
+- `POST /share-links/:token/download` télécharge le fichier partagé.
+- Un lien protégé refuse un mauvais mot de passe avec `401`.
+- Un lien protégé accepte le bon mot de passe et télécharge le fichier.
 
 Interprétation :
 
-Le e2e backend valide correctement le flux d'authentification. Pour satisfaire pleinement le périmètre critique du MVP, il faut ajouter au moins deux scénarios e2e supplémentaires sur les fichiers et les liens publics.
+Le e2e backend valide désormais les flux critiques d'authentification, d'upload anonyme, de consultation de lien public et de téléchargement protégé. Le dernier scénario e2e utile à ajouter concerne l'espace utilisateur connecté : upload avec JWT, historique et suppression.
 
 ## Fonctionnalités obligatoires du MVP à tester
 
@@ -188,13 +198,14 @@ Critères d'acceptation :
 Tests existants :
 
 - Test frontend d'upload anonyme avec affichage du lien.
+- Test frontend d'upload connecté avec tags et copie du lien.
 - Test API frontend sur l'envoi en `FormData`.
+- Test e2e backend `POST /files` en multipart anonyme.
 - Tests backend service sur l'upload connecté et les tags.
 - Tests backend contrôleur sur l'upload connecté et anonyme.
 
 Tests à ajouter :
 
-- Test e2e `POST /files` avec fichier multipart.
 - Test de refus d'une extension interdite comme `.exe`.
 - Test de refus d'un upload anonyme avec tags.
 
@@ -213,14 +224,15 @@ Tests existants :
 
 - Test API frontend `getShareLink`.
 - Test API frontend `downloadSharedFile`.
+- Tests frontend de consultation d'un lien public, téléchargement protégé et erreur de lien.
+- Tests e2e backend de consultation et téléchargement via lien public.
+- Test e2e backend de téléchargement protégé par mot de passe.
 - Test backend service indiquant si un lien est protégé par mot de passe.
 - Tests backend contrôleur sur la consultation et le téléchargement via lien public.
 
 Tests à ajouter :
 
-- Test e2e complet upload puis consultation du lien public.
-- Test e2e téléchargement protégé.
-- Test frontend de `DownloadPage.tsx`.
+- Test e2e d'un lien expiré retournant `410 Gone`.
 
 ### Espace utilisateur
 
@@ -290,7 +302,7 @@ Critère de réussite :
 
 ### Scénario e2e 2 - Upload anonyme et lien public
 
-Statut : à automatiser en e2e API.
+Statut : automatisé côté backend.
 
 Parcours :
 
@@ -306,7 +318,26 @@ Critère de réussite :
 - Le téléchargement retourne `200` avec un flux fichier.
 - Le nom, la taille et le type MIME restent cohérents.
 
-### Scénario e2e 3 - Utilisateur connecté, historique et suppression
+### Scénario e2e 3 - Téléchargement protégé par mot de passe
+
+Statut : automatisé côté backend.
+
+Parcours :
+
+1. Appeler `POST /files` en multipart avec un mot de passe de partage.
+2. Récupérer `shareLink.token` dans la réponse.
+3. Vérifier que `GET /share-links/:token` indique `passwordRequired: true`.
+4. Appeler `POST /share-links/:token/download` avec un mauvais mot de passe.
+5. Appeler `POST /share-links/:token/download` avec le bon mot de passe.
+
+Critère de réussite :
+
+- L'upload retourne `201`.
+- Le lien public retourne `200` et indique qu'un mot de passe est requis.
+- Le mauvais mot de passe retourne `401`.
+- Le bon mot de passe retourne `200` avec le fichier.
+
+### Scénario e2e 4 - Utilisateur connecté, historique et suppression
 
 Statut : à automatiser en e2e API ou e2e navigateur.
 
@@ -332,11 +363,11 @@ Objectif indicatif : 70 % de couverture globale minimum.
 Etat au 2026-05-26 :
 
 - Backend statements : 90,87 %.
-- Frontend statements : 64,57 %.
+- Frontend statements : 84,75 %.
 
 Conclusion :
 
-Le seuil de 70 % est atteint côté backend. Le frontend reste sous l'objectif indicatif et doit encore couvrir les pages et parcours réellement critiques, notamment la page de téléchargement public et les états d'erreur.
+Le seuil de 70 % est atteint côté backend et côté frontend. Les améliorations restantes concernent surtout des scénarios complémentaires, notamment les erreurs de l'espace utilisateur, la suppression et les parcours e2e fichiers.
 
 ## Captures de couverture à produire
 
