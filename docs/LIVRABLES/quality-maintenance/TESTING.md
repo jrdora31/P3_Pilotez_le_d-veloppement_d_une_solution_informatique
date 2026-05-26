@@ -151,6 +151,15 @@ Le e2e backend valide désormais les flux critiques d'authentification, d'upload
 
 Le MVP DataShare repose sur les fonctionnalités suivantes.
 
+Pour les vérifications manuelles en local, utiliser le compte de test suivant :
+
+```text
+Email : test@test.com
+Mot de passe : 12345678
+```
+
+Ce compte sert à valider les parcours connectés : connexion, espace utilisateur, upload rattaché au compte, consultation de l'historique et suppression.
+
 ### Création de compte
 
 | Critère d'acceptation | Preuve de test | Statut |

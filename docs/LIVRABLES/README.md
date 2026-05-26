@@ -63,7 +63,7 @@ Prérequis :
 
 - Node.js LTS ;
 - npm ;
-- PostgreSQL ;
+- PostgreSQL ou Docker Desktop pour lancer PostgreSQL en container ;
 - Git.
 
 Installer les dépendances depuis la racine du repository :
@@ -80,7 +80,21 @@ cp backend/.env.example backend/.env
 
 Adapter les variables de connexion PostgreSQL et le secret JWT dans `backend/.env`.
 
+Si PostgreSQL n'est pas installé localement, lancer le container Docker existant :
+
+```bash
+npm run db:up
+```
+
 ## Exécution en développement
+
+Ordre recommandé :
+
+```bash
+npm run db:up
+npm run backend:dev
+npm run frontend:dev
+```
 
 Lancer le backend :
 
@@ -98,6 +112,15 @@ Adresses locales par défaut :
 
 - frontend : `http://localhost:5173` ou `http://127.0.0.1:5173` ;
 - backend : `http://localhost:3000`.
+
+Compte de test local :
+
+```text
+Email : test@test.com
+Mot de passe : 12345678
+```
+
+Ce compte sert uniquement aux vérifications manuelles en environnement local.
 
 ## Tests et qualité
 

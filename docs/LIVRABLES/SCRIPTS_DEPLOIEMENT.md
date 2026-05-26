@@ -55,7 +55,52 @@ JWT_EXPIRES_IN=1h
 
 Pour une production réelle, `JWT_SECRET` devrait être remplacé par une valeur longue et aléatoire, et `TYPEORM_SYNCHRONIZE` devrait passer à `false`.
 
+## Base de données locale avec Docker
+
+Le backend NestJS ne lance pas PostgreSQL automatiquement. Avant `npm run backend:dev`, il faut donc disposer d'une base PostgreSQL accessible avec les variables de `backend/.env`.
+
+Sur ce poste de développement, la base PostgreSQL existe déjà sous forme d'un container Docker nommé `datashare-postgres`. La commande suivante démarre ce container existant :
+
+```bash
+npm run db:up
+```
+
+Cette commande exécute :
+
+```bash
+docker start datashare-postgres
+```
+
+Elle ne crée pas de nouveau container. Elle suppose que le container `datashare-postgres` existe déjà et expose PostgreSQL sur le port `5432` avec les valeurs de `backend/.env.example` :
+
+```env
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres
+DATABASE_NAME=datashare
+```
+
+Commandes utiles :
+
+```bash
+npm run db:logs
+npm run db:down
+```
+
+`npm run db:down` arrête le container sans le supprimer.
+
 ## Développement local
+
+Ordre recommandé :
+
+```bash
+npm install
+cp backend/.env.example backend/.env
+npm run db:up
+npm run backend:dev
+npm run frontend:dev
+```
 
 Lancer le backend :
 
@@ -73,6 +118,19 @@ Résultat attendu :
 
 - API NestJS disponible sur `http://localhost:3000` ;
 - frontend Vite disponible sur `http://localhost:5173` ou `http://127.0.0.1:5173`.
+
+Si `npm run backend:dev` affiche `ECONNREFUSED` sur `localhost:5432`, cela signifie que PostgreSQL n'est pas démarré ou que les variables `DATABASE_*` ne correspondent pas à la base disponible.
+
+## Compte de test local
+
+Pour les vérifications manuelles en local, un compte de test peut être utilisé :
+
+```text
+Email : test@test.com
+Mot de passe : 12345678
+```
+
+Ce compte est destiné uniquement à l'environnement local de développement.
 
 ## Validation avant livraison
 
