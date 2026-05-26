@@ -112,9 +112,7 @@ Impact :
 - un utilisateur connecté ne peut supprimer que ses propres fichiers ;
 - un identifiant de fichier valide ne suffit pas si le propriétaire ne correspond pas.
 
-Point à renforcer par test :
-
-Ajouter un test explicite qui vérifie qu'un utilisateur A ne peut pas supprimer le fichier d'un utilisateur B.
+![Preuve USER A & USER B accès fichiers](screenshots/test_userA_userB_file_delete.png "test_userA_userB_file_delete")
 
 ### CORS restreint
 
@@ -155,7 +153,7 @@ Contrôles observés :
 
 Impact :
 
-- le nom fourni par l'utilisateur ne pilote pas directement le chemin disque ;
+- le nom fourni par l'utilisateur ne reflète pas directement le nom et le chemin sur le disque ;
 - les extensions les plus dangereuses sont refusées ;
 - un utilisateur ne peut pas envoyer un fichier sans limite de taille.
 
@@ -204,36 +202,9 @@ Déclenchements :
 
 Point d'attention :
 
-La route de maintenance est protégée mais pas encore réservée à un rôle administrateur. Pour un MVP local cela reste acceptable, mais une production réelle devrait ajouter une notion de rôle ou de compte administrateur.
+La route de maintenance est protégée mais pas encore réservée à un rôle administrateur. Le rôle devra être ajouté pour la production. Actuellement, un utilisateur authentifié possédant un token JWT peut appeler manuellement `POST /maintenance/expired-files/purge` et déclencher la purge de tous les fichiers expirés. Le risque est limité aux fichiers déjà expirés, mais cette action de maintenance ne devrait pas être accessible à un utilisateur standard en production.
 
 ## Scan des dépendances npm
-
-### Commande de scan production
-
-Emplacement : racine du projet, via `npm audit --omit=dev` sur `package-lock.json`.
-
-Commande exécutée le 2026-05-26 :
-
-```bash
-npm audit --omit=dev
-```
-
-Résultat :
-
-```text
-found 0 vulnerabilities
-```
-
-Analyse :
-
-Aucune vulnérabilité n'est remontée sur les dépendances nécessaires à l'exécution production. C'est le signal le plus important pour le risque runtime immédiat.
-
-Décision :
-
-- pas de correction urgente côté dépendances de production ;
-- conserver ce scan dans la routine avant livraison.
-
-### Commande de scan complet
 
 Emplacement : racine du projet, via `npm audit` sur `package-lock.json`.
 
@@ -272,14 +243,7 @@ npm run frontend:build
 
 Si `npm audit fix` propose une mise à jour majeure, ne pas l'appliquer automatiquement. Lire le changement, tester dans une branche séparée et vérifier la compatibilité NestJS.
 
-## Procédure de contrôle sécurité avant livraison
-
-Repères de code :
-
-- `TYPEORM_SYNCHRONIZE` : `backend/src/app.module.ts`, ligne 30.
-- dossier d'uploads : `backend/src/files/files.module.ts`, ligne 29 ; téléchargement contrôlé par `backend/src/files/share-links.controller.ts`, lignes 19-32 et `backend/src/files/files.service.ts`, ligne 160.
-- absence d'exposition statique directe : aucun `express.static`, `ServeStaticModule` ou `useStaticAssets` trouvé dans le backend.
-- `passwordHash` non exposé : `backend/src/users/public-user.type.ts`, lignes 3-11 ; tests e2e dans `backend/test/auth.e2e-spec.ts`, lignes 87-122.
+## Checklist sécurité avant livraison
 
 Exécuter depuis la racine :
 
@@ -295,13 +259,36 @@ npm run frontend:build
 Contrôles manuels à faire :
 
 1. Vérifier que `backend/.env` n'est pas versionné.
+
+   Repère : `.gitignore`, ligne 29 ; vérifier aussi avec `git status --short backend/.env`.
+
 2. Vérifier que `JWT_SECRET` n'est pas la valeur d'exemple.
+
+   Repère : `backend/src/auth/auth.module.ts`, ligne 18 ; `backend/src/auth/jwt.strategy.ts`, ligne 13.
+
 3. Vérifier que `FRONTEND_ORIGIN` ne vaut pas `*`.
+
+   Repère : `backend/src/main.ts`, lignes 10-18.
+
 4. Vérifier que `TYPEORM_SYNCHRONIZE=false` en production.
+
+   Repère : `backend/src/app.module.ts`, ligne 30.
+
 5. Vérifier que `DATABASE_SSL=true` si la base distante l'exige.
+
+   Repère : `backend/src/app.module.ts`, lignes 25-28.
+
 6. Vérifier que le dossier d'uploads n'est pas servi directement par le frontend.
+
+   Repère : `backend/src/files/files.module.ts`, ligne 29 ; téléchargement contrôlé par `backend/src/files/share-links.controller.ts`, lignes 19-32.
+
 7. Vérifier que les extensions interdites sont toujours présentes dans le filtre Multer.
+
+   Repère : `backend/src/files/files.module.ts`, lignes 19 et 43-49.
+
 8. Vérifier que les réponses API utilisateur ne contiennent pas `passwordHash`.
+
+   Repère : `backend/src/users/public-user.type.ts`, lignes 3-11 ; tests e2e dans `backend/test/auth.e2e-spec.ts`, lignes 87-122.
 
 ## Tests de sécurité fonctionnels recommandés
 
@@ -309,10 +296,10 @@ Contrôles manuels à faire :
 
 Créer un compte valide :
 
-```bash
-curl -i -X POST http://localhost:3000/auth/register \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"claire.marie@datashare.fr\",\"password\":\"StrongPassword123!\",\"passwordConfirmation\":\"StrongPassword123!\"}"
+```powershell
+curl.exe -i -X POST "http://localhost:3000/auth/register" `
+  -H "Content-Type: application/json" `
+  --data-raw '{"email":"claire.marie@datashare.fr","password":"StrongPassword123!","passwordConfirmation":"StrongPassword123!"}'
 ```
 
 Résultat attendu :
@@ -323,10 +310,10 @@ Résultat attendu :
 
 Tester un mot de passe incorrect :
 
-```bash
-curl -i -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"claire.marie@datashare.fr\",\"password\":\"WrongPassword123!\"}"
+```powershell
+curl.exe -i -X POST "http://localhost:3000/auth/login" `
+  -H "Content-Type: application/json" `
+  --data-raw '{"email":"claire.marie@datashare.fr","password":"WrongPassword123!"}'
 ```
 
 Résultat attendu :
@@ -338,9 +325,9 @@ Résultat attendu :
 
 Tester une extension bloquée :
 
-```bash
-curl -i -X POST http://localhost:3000/files \
-  -F "file=@./test.exe"
+```powershell
+curl.exe -i -X POST "http://localhost:3000/files" `
+  -F "file=@.\test.exe"
 ```
 
 Résultat attendu :
@@ -352,8 +339,8 @@ Résultat attendu :
 
 Tester l'accès à la liste des fichiers sans JWT :
 
-```bash
-curl -i http://localhost:3000/files
+```powershell
+curl.exe -i "http://localhost:3000/files"
 ```
 
 Résultat attendu :
@@ -364,8 +351,8 @@ Résultat attendu :
 
 Tester un lien expiré :
 
-```bash
-curl -i http://localhost:3000/share-links/<token-expire>
+```powershell
+curl.exe -i "http://localhost:3000/share-links/<token-expire>"
 ```
 
 Résultat attendu :

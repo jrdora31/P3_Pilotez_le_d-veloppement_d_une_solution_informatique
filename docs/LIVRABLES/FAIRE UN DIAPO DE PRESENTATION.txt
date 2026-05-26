@@ -1,3 +1,10 @@
 titre
 
 Un support de présentation du projet en format PDF ou PPT
+
+dans le diapo de preésentation, reprendre les fichiers markdown en mode slide, et en parler
+
+par exemple pour security.md faire une slide sur les améliorations possibles du projet
+
+faire aussi une slide par rapport aux pratiques à suivre qui sont demandées, en précisant qu'elles
+sont toutes suivies et en disant de quelle façon.
