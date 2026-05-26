@@ -1,6 +1,6 @@
 # Plan de tests
 
-Dernière mise à jour : 2026-05-11.
+Dernière mise à jour : 2026-05-26.
 
 ## Objectif du document
 
@@ -50,9 +50,11 @@ Les commandes sont centralisées dans le `package.json` racine.
 | `npm run frontend:build` | Vérifie TypeScript et le build Vite | Avant fusion ou livraison |
 | `npm run openapi:lint` | Vérifie le contrat OpenAPI | Après modification de `docs/OpenAPI/openapi.yaml` |
 
-## Résultats vérifiés le 2026-05-11
+## Résultats vérifiés
 
 ### Backend coverage
+
+Résultat vérifié le 2026-05-26.
 
 Commande exécutée :
 
@@ -62,34 +64,20 @@ npm run backend:coverage
 
 Résultat :
 
-- 7 suites de tests réussies.
-- 24 tests réussis.
-- Couverture globale statements : 62,83 %.
-- Couverture globale branches : 54,65 %.
-- Couverture globale functions : 65,67 %.
-- Couverture globale lines : 63,56 %.
+- 13 suites de tests réussies.
+- 42 tests réussis.
+- Couverture globale statements : 90,87 %.
+- Couverture globale branches : 72,09 %.
+- Couverture globale functions : 94,02 %.
+- Couverture globale lines : 89,96 %.
 
-Interprétation :
+**Couverture backend Jest du 2026-05-26**
 
-Le backend dispose déjà d'une base de tests utile, notamment sur l'authentification, les services utilisateurs, la stratégie JWT, le service fichiers et le scheduler d'expiration. En revanche, l'objectif indicatif de 70 % n'est pas encore atteint au global.
-
-Les zones qui tirent la couverture vers le bas sont surtout :
-
-- `files.controller.ts`
-- `share-links.controller.ts`
-- `maintenance.controller.ts`
-- les DTO de fichiers
-- `optional-jwt-auth.guard.ts`
-- `local-file-storage.service.ts`
-
-Priorité d'amélioration :
-
-1. Ajouter des tests de contrôleur sur upload, liste, suppression et purge.
-2. Ajouter des tests sur la consultation et le téléchargement via lien public.
-3. Tester explicitement les DTO de fichiers, surtout `UploadFileDto`.
-4. Tester le comportement d'erreur du stockage local.
+![Couverture backend Jest du 2026-05-26](screenshots/backend_tests_result.png "Couverture backend Jest du 2026-05-26")
 
 ### Frontend coverage
+
+Résultat vérifié le 2026-05-11.
 
 Commande exécutée :
 
@@ -202,6 +190,7 @@ Tests existants :
 - Test frontend d'upload anonyme avec affichage du lien.
 - Test API frontend sur l'envoi en `FormData`.
 - Tests backend service sur l'upload connecté et les tags.
+- Tests backend contrôleur sur l'upload connecté et anonyme.
 
 Tests à ajouter :
 
@@ -225,6 +214,7 @@ Tests existants :
 - Test API frontend `getShareLink`.
 - Test API frontend `downloadSharedFile`.
 - Test backend service indiquant si un lien est protégé par mot de passe.
+- Tests backend contrôleur sur la consultation et le téléchargement via lien public.
 
 Tests à ajouter :
 
@@ -248,10 +238,10 @@ Tests existants :
 - Test frontend redirigeant `/account` sans session.
 - Test API frontend `listOwnFiles` et `deleteFile`.
 - Test backend service filtrant les fichiers actifs.
+- Tests backend contrôleur sur la liste et la suppression des fichiers utilisateur.
 
 Tests à ajouter :
 
-- Test contrôleur `DELETE /files/:fileId` avec JWT.
 - Test d'interdiction de suppression d'un fichier d'un autre utilisateur.
 - Test de l'état vide de l'espace utilisateur.
 
@@ -269,10 +259,10 @@ Tests existants :
 
 - Tests `FilesExpirationScheduler`.
 - Test `FilesService.purgeExpiredFiles`.
+- Test contrôleur `POST /maintenance/expired-files/purge`.
 
 Tests à ajouter :
 
-- Test contrôleur `POST /maintenance/expired-files/purge`.
 - Test e2e d'un lien expiré retournant `410`.
 
 ## Scénarios end-to-end recommandés
@@ -339,14 +329,14 @@ Critère de réussite :
 
 Objectif indicatif : 70 % de couverture globale minimum.
 
-Etat au 2026-05-11 :
+Etat au 2026-05-26 :
 
-- Backend statements : 62,83 %.
+- Backend statements : 90,87 %.
 - Frontend statements : 64,57 %.
 
 Conclusion :
 
-Le seuil de 70 % n'est pas encore atteint. Les tests sont néanmoins suffisamment structurés pour servir de base. La priorité n'est pas d'ajouter des tests artificiels, mais de couvrir les pages et contrôleurs réellement critiques.
+Le seuil de 70 % est atteint côté backend. Le frontend reste sous l'objectif indicatif et doit encore couvrir les pages et parcours réellement critiques, notamment la page de téléchargement public et les états d'erreur.
 
 ## Captures de couverture à produire
 
@@ -411,4 +401,3 @@ Critère de validation :
 - Les vulnérabilités de production doivent être à zéro ou justifiées.
 - Les régressions de couverture doivent être expliquées.
 - Toute baisse sous 70 % doit être accompagnée d'un plan d'amélioration.
-
