@@ -33,3 +33,4 @@ frontend/.env.local
 # temp directory
 .temp
 .tmp
+.tmp_pdfspec/
