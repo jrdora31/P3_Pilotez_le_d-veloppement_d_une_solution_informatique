@@ -31,7 +31,6 @@ Emplacement : `backend/src/main.ts`, lignes 21-27.
 
 Le backend active un `ValidationPipe` global dans `backend/src/main.ts`.
 
-Configuration :
 
 - `transform: true`
 - `whitelist: true`
@@ -60,7 +59,7 @@ Contrôles notables :
 
 Limite actuelle :
 
-La politique de mot de passe reste volontairement simple pour le MVP. Une version plus stricte pourrait exiger des catégories de caractères ou intégrer un contrôle contre les mots de passe compromis. Ce durcissement doit rester compatible avec l'ergonomie du produit.
+La politique de mot de passe reste volontairement simple pour le MVP. Une version plus stricte pourrait exiger des catégories de caractères ou intégrer un contrôle contre les mots de passe compromis. Ce durcissement doit rester compatible avec le produit.
 
 ### Hash des mots de passe
 
@@ -99,7 +98,7 @@ Bonnes pratiques de configuration :
 
 - `JWT_SECRET` doit être long, aléatoire et propre à chaque environnement ;
 - le secret local de `.env.example` ne doit jamais être utilisé en production ;
-- `JWT_EXPIRES_IN` doit rester raisonnable ;
+- `JWT_EXPIRES_IN` doit rester raisonnable <7 jours ;
 - les tokens ne doivent pas être loggés.
 
 ### Contrôle d'accès propriétaire
