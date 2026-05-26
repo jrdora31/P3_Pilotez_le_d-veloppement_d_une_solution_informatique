@@ -1,6 +1,6 @@
-# DataShare - README détaillé du repository
+# DataShare
 
-Ce document sert de README détaillé pour le livrable repository. Il explique le projet, son architecture, les commandes utiles et l'emplacement des documents demandés pour la soutenance.
+Ce README est le point d'entrée du repository. Il centralise la présentation du projet, son architecture, les commandes utiles et l'emplacement des documents demandés pour la soutenance.
 
 ## Présentation
 
@@ -52,9 +52,9 @@ PROJET_3/
 `-- docs/
     |-- Architecture/
     |-- OpenAPI/
-    |-- documentation technique/
-    |-- ressources_projet_3/
-    `-- AI docs/
+    `-- documentation technique/
+        |-- SCRIPTS_DEPLOIEMENT.md
+        `-- quality-maintenance/
 ```
 
 ## Installation
@@ -137,11 +137,7 @@ npm run frontend:build
 npm run openapi:lint
 ```
 
-Les documents de suivi qualité sont dans :
-
-```text
-docs/documentation technique/quality-maintenance/
-```
+Les documents de suivi qualité sont dans [docs/documentation technique/quality-maintenance/](docs/documentation%20technique/quality-maintenance/).
 
 Fichiers disponibles :
 
@@ -152,21 +148,13 @@ Fichiers disponibles :
 
 ## Build et scripts de déploiement
 
-Les scripts de build et d'exécution sont définis dans le `package.json` racine. Pour le livrable, le document dédié est :
-
-```text
-docs/documentation technique/SCRIPTS_DEPLOIEMENT.md
-```
+Les scripts de build et d'exécution sont définis dans le `package.json` racine. Pour le livrable, le document dédié est [docs/documentation technique/SCRIPTS_DEPLOIEMENT.md](docs/documentation%20technique/SCRIPTS_DEPLOIEMENT.md).
 
 Le projet ne contient pas encore de script de déploiement vers un hébergeur précis, car aucun environnement de production cible n'est défini. En revanche, le repository contient les commandes nécessaires pour installer, tester, builder et lancer le projet de manière reproductible.
 
 ## Documentation API
 
-Le contrat API est disponible dans :
-
-```text
-docs/OpenAPI/openapi.yaml
-```
+Le contrat API est disponible dans [docs/OpenAPI/openapi.yaml](docs/OpenAPI/openapi.yaml).
 
 Pour ouvrir Swagger UI :
 
@@ -182,30 +170,23 @@ npm run openapi:lint
 
 ## Documents de conception
 
-Les schémas sont disponibles dans :
-
-```text
-docs/Architecture/
-```
+Les schémas sont disponibles dans [docs/Architecture/](docs/Architecture/).
 
 Ils couvrent :
 
 - l'architecture de la solution logicielle ;
 - le modèle de données avec les entités principales.
 
-## Ressources de projet
+## Preuves et ressources versionnées
 
-Le dossier suivant contient les ressources fournies ou utilisées pour préparer la documentation :
+Les preuves de tests, sécurité, performance et maintenance sont regroupées dans [docs/documentation technique/quality-maintenance/](docs/documentation%20technique/quality-maintenance/).
 
-```text
-docs/ressources_projet_3/
-```
+Ce dossier contient notamment :
 
-Il contient notamment :
-
-- les spécifications au format PDF ;
-- le modèle de documentation technique au format PDF ;
-- les captures d'écrans des parcours principaux.
+- les résultats de tests et de couverture ;
+- les captures d'écran de preuve ;
+- les exports JSON de performance ;
+- les notes de sécurité, performance et maintenance.
 
 ## Historique Git
 
