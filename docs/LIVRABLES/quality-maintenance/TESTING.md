@@ -153,129 +153,65 @@ Le MVP DataShare repose sur les fonctionnalités suivantes.
 
 ### Création de compte
 
-Critères d'acceptation :
-
-- Un email valide et un mot de passe valide créent un compte.
-- L'email est normalisé en minuscules.
-- Le mot de passe n'est jamais renvoyé dans la réponse.
-- Un email déjà utilisé est refusé.
-- Une entrée invalide est refusée avec une erreur claire.
-
-Tests existants :
-
-- Tests unitaires `AuthService`.
-- Tests `AuthController`.
-- Tests e2e `POST /auth/register`.
-- Tests frontend de création de compte et redirection vers la connexion.
+| Critère d'acceptation | Preuve de test | Statut |
+| --- | --- | --- |
+| Un email valide et un mot de passe valide créent un compte. | `AuthService`, `AuthController`, e2e `POST /auth/register`, test frontend de création de compte. | Validé |
+| L'email est normalisé en minuscules. | `UsersService` vérifie la normalisation à la recherche et à la création. | Validé |
+| Le mot de passe n'est jamais renvoyé dans la réponse. | `AuthService` vérifie le retour utilisateur public ; e2e `POST /auth/register` vérifie l'absence de `passwordHash`. | Validé |
+| Un email déjà utilisé est refusé. | `AuthService` et e2e `POST /auth/register` vérifient le conflit `409`. | Validé |
+| Une entrée invalide est refusée avec une erreur claire. | DTO d'authentification, e2e données invalides en `400`, test frontend de mots de passe différents. | Validé |
 
 ### Connexion
 
-Critères d'acceptation :
-
-- Un utilisateur existant peut se connecter avec le bon mot de passe.
-- La réponse contient un JWT et un utilisateur public.
-- Une erreur de mot de passe retourne `401`.
-- Le frontend stocke la session et affiche l'espace connecté.
-- La déconnexion supprime la session locale.
-
-Tests existants :
-
-- Tests unitaires `AuthService`.
-- Tests e2e `POST /auth/login`.
-- Tests frontend de connexion, erreur de connexion et déconnexion.
+| Critère d'acceptation | Preuve de test | Statut |
+| --- | --- | --- |
+| Un utilisateur existant peut se connecter avec le bon mot de passe. | `AuthService` et e2e `POST /auth/login`. | Validé |
+| La réponse contient un JWT et un utilisateur public. | `AuthService` vérifie le token ; e2e `POST /auth/login` vérifie `accessToken` et l'utilisateur public. | Validé |
+| Une erreur de mot de passe retourne `401`. | `AuthService` et e2e identifiants invalides. | Validé |
+| Le frontend stocke la session et affiche l'espace connecté. | Test frontend de connexion puis affichage de l'espace utilisateur ; tests `auth-storage`. | Validé |
+| La déconnexion supprime la session locale. | Test frontend de déconnexion et vérification du `localStorage`. | Validé |
 
 ### Upload de fichier
 
-Critères d'acceptation :
-
-- Un visiteur anonyme peut téléverser un fichier et recevoir un lien de partage.
-- Un utilisateur connecté peut téléverser un fichier avec des tags.
-- Les tags sont refusés pour un upload anonyme.
-- Un fichier manquant est refusé.
-- Les extensions dangereuses sont refusées.
-- La taille maximale est bornée côté backend.
-
-Tests existants :
-
-- Test frontend d'upload anonyme avec affichage du lien.
-- Test frontend d'upload connecté avec tags et copie du lien.
-- Test API frontend sur l'envoi en `FormData`.
-- Test e2e backend `POST /files` en multipart anonyme.
-- Tests backend service sur l'upload connecté et les tags.
-- Tests backend contrôleur sur l'upload connecté et anonyme.
-
-Tests à ajouter :
-
-- Test de refus d'une extension interdite comme `.exe`.
-- Test de refus d'un upload anonyme avec tags.
+| Critère d'acceptation | Preuve de test | Statut |
+| --- | --- | --- |
+| Un visiteur anonyme peut téléverser un fichier et recevoir un lien de partage. | Test frontend d'upload anonyme, test API frontend `FormData`, e2e backend `POST /files`. | Validé |
+| Un utilisateur connecté peut téléverser un fichier avec des tags. | Test frontend d'upload connecté avec tags, `FilesService`, `FilesController`. | Validé |
+| Les tags sont refusés pour un upload anonyme. | `FilesService` vérifie le refus métier. | Validé côté service |
+| Un fichier manquant est refusé. | Règle présente dans `FilesService.upload`. | À compléter par un test |
+| Les extensions dangereuses sont refusées. | Règle présente dans la configuration Multer du backend. | À compléter par un test |
+| La taille maximale est bornée côté backend. | Limite configurée à 1 Gio dans `FilesModule`. | À compléter par un test ou une preuve de configuration |
 
 ### Lien de partage public
 
-Critères d'acceptation :
-
-- Le lien contient un token non prédictible.
-- Le lien peut être consulté sans authentification.
-- Le téléchargement fonctionne via le token.
-- Si un mot de passe est défini, le téléchargement exige ce mot de passe.
-- Un lien expiré retourne `410 Gone`.
-- Un token inconnu retourne `404 Not Found`.
-
-Tests existants :
-
-- Test API frontend `getShareLink`.
-- Test API frontend `downloadSharedFile`.
-- Tests frontend de consultation d'un lien public, téléchargement protégé et erreur de lien.
-- Tests e2e backend de consultation et téléchargement via lien public.
-- Test e2e backend de téléchargement protégé par mot de passe.
-- Test backend service indiquant si un lien est protégé par mot de passe.
-- Tests backend contrôleur sur la consultation et le téléchargement via lien public.
-
-Tests à ajouter :
-
-- Test e2e d'un lien expiré retournant `410 Gone`.
+| Critère d'acceptation | Preuve de test | Statut |
+| --- | --- | --- |
+| Le lien contient un token non prédictible. | `FilesService` génère un token avec `randomBytes` et vérifie l'unicité ; l'e2e vérifie la présence d'un token. | Partiel |
+| Le lien peut être consulté sans authentification. | E2e backend `GET /share-links/:token`, test frontend de consultation du lien. | Validé |
+| Le téléchargement fonctionne via le token. | E2e backend `POST /share-links/:token/download`, test API frontend `downloadSharedFile`. | Validé |
+| Si un mot de passe est défini, le téléchargement exige ce mot de passe. | E2e backend de téléchargement protégé : mauvais mot de passe `401`, bon mot de passe `200`. | Validé |
+| Un lien expiré retourne `410 Gone`. | Règle présente dans `FilesService`. | À compléter par un e2e ou test service explicite |
+| Un token inconnu retourne `404 Not Found`. | Parcours d'erreur frontend simulé. | À compléter côté backend |
 
 ### Espace utilisateur
 
-Critères d'acceptation :
-
-- Un utilisateur connecté voit ses fichiers.
-- Un utilisateur non connecté est redirigé vers la connexion.
-- La liste peut filtrer les fichiers actifs ou expirés.
-- La suppression ne concerne que les fichiers du propriétaire.
-- La suppression retire aussi le fichier physique du stockage.
-
-Tests existants :
-
-- Test frontend affichant l'historique utilisateur.
-- Test frontend redirigeant `/account` sans session.
-- Test API frontend `listOwnFiles` et `deleteFile`.
-- Test backend service filtrant les fichiers actifs.
-- Tests backend contrôleur sur la liste et la suppression des fichiers utilisateur.
-
-Tests à ajouter :
-
-- Test d'interdiction de suppression d'un fichier d'un autre utilisateur.
-- Test de l'état vide de l'espace utilisateur.
+| Critère d'acceptation | Preuve de test | Statut |
+| --- | --- | --- |
+| Un utilisateur connecté voit ses fichiers. | Test frontend d'historique utilisateur, test API frontend `listOwnFiles`, `FilesController`. | Validé |
+| Un utilisateur non connecté est redirigé vers la connexion. | Test frontend `/account` sans session. | Validé |
+| La liste peut filtrer les fichiers actifs ou expirés. | `FilesService` teste le filtrage des fichiers actifs ; `FilesController` transmet le statut. | Partiel |
+| La suppression ne concerne que les fichiers du propriétaire. | `FilesService.deleteOwnFile` filtre par `fileId` et `ownerId` ; `FilesController` transmet l'utilisateur courant. | Partiel |
+| La suppression retire aussi le fichier physique du stockage. | `LocalFileStorageService` est testé ; la purge teste la suppression physique. | À compléter pour `deleteOwnFile` |
 
 ### Expiration et purge
 
-Critères d'acceptation :
-
-- Un lien expiré n'est plus téléchargeable.
-- La purge supprime les métadonnées et le fichier physique.
-- La purge peut être déclenchée automatiquement par intervalle.
-- La purge peut être déclenchée manuellement via une route protégée.
-- La réponse de purge indique le nombre de fichiers, liens et octets supprimés.
-
-Tests existants :
-
-- Tests `FilesExpirationScheduler`.
-- Test `FilesService.purgeExpiredFiles`.
-- Test contrôleur `POST /maintenance/expired-files/purge`.
-
-Tests à ajouter :
-
-- Test e2e d'un lien expiré retournant `410`.
+| Critère d'acceptation | Preuve de test | Statut |
+| --- | --- | --- |
+| Un lien expiré n'est plus téléchargeable. | Règle présente dans `FilesService`. | À compléter par un e2e ou test service explicite |
+| La purge supprime les métadonnées et le fichier physique. | `FilesService.purgeExpiredFiles` vérifie la suppression du fichier physique et des métadonnées. | Validé |
+| La purge peut être déclenchée automatiquement par intervalle. | `FilesExpirationScheduler` vérifie l'appel périodique à la purge. | Validé |
+| La purge peut être déclenchée manuellement via une route protégée. | `MaintenanceController` vérifie l'appel à `purgeExpiredFiles`. | Partiel |
+| La réponse de purge indique le nombre de fichiers, liens et octets supprimés. | `FilesService.purgeExpiredFiles` vérifie `purgedFiles`, `purgedShareLinks` et `purgedBytes`. | Validé |
 
 ## Scénarios end-to-end recommandés
 
