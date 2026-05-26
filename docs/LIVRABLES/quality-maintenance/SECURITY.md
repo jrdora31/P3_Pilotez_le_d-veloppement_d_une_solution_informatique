@@ -27,6 +27,8 @@ Les risques prioritaires pour DataShare sont :
 
 ### Validation globale des entrées
 
+Emplacement : `backend/src/main.ts`, lignes 21-27.
+
 Le backend active un `ValidationPipe` global dans `backend/src/main.ts`.
 
 Configuration :
@@ -45,6 +47,8 @@ Cette mesure réduit le risque d'injection de données imprévues dans les servi
 
 ### Validation des DTO d'authentification
 
+Emplacement : `backend/src/auth/dto/register.dto.ts`, lignes 4-14 ; `backend/src/auth/dto/login.dto.ts`, lignes 4-8.
+
 Les DTO `RegisterDto` et `LoginDto` valident les emails et les mots de passe.
 
 Contrôles notables :
@@ -59,6 +63,8 @@ Limite actuelle :
 La politique de mot de passe reste volontairement simple pour le MVP. Une version plus stricte pourrait exiger des catégories de caractères ou intégrer un contrôle contre les mots de passe compromis. Ce durcissement doit rester compatible avec l'ergonomie du produit.
 
 ### Hash des mots de passe
+
+Emplacement : `backend/src/auth/auth.service.ts`, lignes 32 et 63 ; `backend/src/files/files.service.ts`, lignes 152 et 211.
 
 Les mots de passe utilisateurs et les mots de passe optionnels de lien de partage sont hashés avec `bcryptjs`.
 
@@ -78,6 +84,8 @@ Une réponse API ne doit jamais contenir `passwordHash`. Ce point est déjà cou
 
 ### Authentification JWT
 
+Emplacement : `backend/src/auth/auth.module.ts`, lignes 15-21 ; `backend/src/auth/jwt.strategy.ts`, ligne 13 ; guards dans `backend/src/files/files.controller.ts`, lignes 39, 50 et 61.
+
 L'authentification repose sur JWT via NestJS, Passport et `passport-jwt`.
 
 Usages :
@@ -96,6 +104,8 @@ Bonnes pratiques de configuration :
 
 ### Contrôle d'accès propriétaire
 
+Emplacement : `backend/src/files/files.service.ts`, ligne 108.
+
 La suppression d'un fichier utilise à la fois l'identifiant du fichier et l'identifiant du propriétaire.
 
 Impact :
@@ -108,6 +118,8 @@ Point à renforcer par test :
 Ajouter un test explicite qui vérifie qu'un utilisateur A ne peut pas supprimer le fichier d'un utilisateur B.
 
 ### CORS restreint
+
+Emplacement : `backend/src/main.ts`, lignes 10-18.
 
 Le backend lit les origines autorisées depuis `FRONTEND_ORIGIN`.
 
@@ -130,6 +142,8 @@ FRONTEND_ORIGIN=https://datashare.fr
 ```
 
 ### Upload de fichiers
+
+Emplacement : `backend/src/files/files.module.ts`, ligne 19 pour les extensions interdites et lignes 26-49 pour la configuration Multer.
 
 Le module fichiers configure Multer avec un stockage disque.
 
@@ -158,6 +172,8 @@ Ajouter une vérification de signature fichier pour certains types, ou brancher 
 
 ### Tokens de lien public
 
+Emplacement : `backend/src/files/files.service.ts`, ligne 220.
+
 Les liens de partage utilisent un token généré par `randomBytes(18).toString("base64url")`.
 
 Impact :
@@ -171,6 +187,8 @@ Bon réflexe de maintenance :
 Ne pas réduire la taille du token sans raison forte. Le lien public est le principal secret d'accès pour les fichiers non protégés par mot de passe.
 
 ### Expiration et purge
+
+Emplacement : `backend/src/files/files.service.ts`, lignes 167-182 et 326-327 ; scheduler dans `backend/src/files/files-expiration.scheduler.ts`, ligne 26 ; route manuelle dans `backend/src/files/maintenance.controller.ts`, lignes 9-13.
 
 Les liens ont une date d'expiration. Un lien expiré retourne `410 Gone`.
 
@@ -193,7 +211,9 @@ La route de maintenance est protégée mais pas encore réservée à un rôle ad
 
 ### Commande de scan production
 
-Commande exécutée le 2026-05-11 :
+Emplacement : racine du projet, via `npm audit --omit=dev` sur `package-lock.json`.
+
+Commande exécutée le 2026-05-26 :
 
 ```bash
 npm audit --omit=dev
@@ -216,7 +236,9 @@ Décision :
 
 ### Commande de scan complet
 
-Commande exécutée le 2026-05-11 :
+Emplacement : racine du projet, via `npm audit` sur `package-lock.json`.
+
+Commande exécutée le 2026-05-26 :
 
 ```bash
 npm audit
@@ -224,31 +246,25 @@ npm audit
 
 Résultat :
 
-- 1 vulnérabilité `high`.
-- Package concerné : `fast-uri <=3.1.1`.
-- Chaîne observée :
-
 ```text
-@nestjs/cli -> @angular-devkit/core -> ajv -> fast-uri
+found 0 vulnerabilities
 ```
 
 Analyse :
 
-La vulnérabilité se situe dans une dépendance transitive de développement, utilisée par l'outillage Nest CLI. Elle ne ressort pas dans le scan `--omit=dev`, donc elle n'affecte pas directement le runtime de production d'après le scan npm du 2026-05-11.
+Les vulnérabilités observées avant correction le 2026-05-26 ont été corrigées par `npm audit fix`.
 
-Le risque reste à traiter parce qu'un outil de build ou de développement vulnérable peut affecter la chaîne de livraison.
+Paquets corrigés :
 
-Décision :
+- `qs` : `6.15.1` vers `6.15.2`.
+- `fast-uri` : `3.1.0` vers `3.1.2`.
+- `brace-expansion` : `5.0.5` vers `5.0.6`.
 
-1. Ne pas bloquer le MVP si le scan production reste à zéro.
-2. Planifier une correction de dépendance via `npm audit fix`.
-3. Relancer tous les tests et builds après correction.
-4. Vérifier que le `package-lock.json` ne force pas une mise à jour majeure non voulue.
-
-Commande de correction recommandée :
+Validation après correction :
 
 ```bash
-npm audit fix
+npm audit
+npm audit --omit=dev
 npm run backend:test
 npm run frontend:test
 npm run backend:build
@@ -258,6 +274,13 @@ npm run frontend:build
 Si `npm audit fix` propose une mise à jour majeure, ne pas l'appliquer automatiquement. Lire le changement, tester dans une branche séparée et vérifier la compatibilité NestJS.
 
 ## Procédure de contrôle sécurité avant livraison
+
+Repères de code :
+
+- `TYPEORM_SYNCHRONIZE` : `backend/src/app.module.ts`, ligne 30.
+- dossier d'uploads : `backend/src/files/files.module.ts`, ligne 29 ; téléchargement contrôlé par `backend/src/files/share-links.controller.ts`, lignes 19-32 et `backend/src/files/files.service.ts`, ligne 160.
+- absence d'exposition statique directe : aucun `express.static`, `ServeStaticModule` ou `useStaticAssets` trouvé dans le backend.
+- `passwordHash` non exposé : `backend/src/users/public-user.type.ts`, lignes 3-11 ; tests e2e dans `backend/test/auth.e2e-spec.ts`, lignes 87-122.
 
 Exécuter depuis la racine :
 
@@ -388,4 +411,3 @@ Une version peut être considérée acceptable pour le MVP si :
 - les liens expirés ne permettent pas le téléchargement ;
 - les secrets ne sont pas versionnés ;
 - les décisions de risque restantes sont connues et documentées.
-
