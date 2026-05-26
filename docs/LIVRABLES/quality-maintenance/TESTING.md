@@ -215,7 +215,7 @@ Le MVP DataShare repose sur les fonctionnalités suivantes.
 
 ## Scénarios end-to-end
 
-Il y a en tout 9 scénarios, voici les résultats : 
+Il y a en tout 7 scénarios, voici les résultats : 
 
 ![Couverture E2E du 2026-05-26](screenshots/E2E_tests_result.png "E2E_tests_result.png")
 
