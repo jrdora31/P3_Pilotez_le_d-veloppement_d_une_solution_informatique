@@ -1,7 +1,5 @@
 # DataShare
 
-Ce README est le point d'entrée du repository. Il centralise la présentation du projet, son architecture, les commandes utiles et l'emplacement des documents demandés pour la soutenance.
-
 ## Présentation
 
 DataShare est un prototype d'application web de partage de fichiers. L'utilisateur peut déposer un fichier, générer un lien public, protéger ce lien avec un mot de passe optionnel, définir une expiration et retrouver ses fichiers dans un espace personnel lorsqu'il est connecté.
