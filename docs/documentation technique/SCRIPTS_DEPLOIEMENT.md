@@ -59,19 +59,36 @@ Pour une production réelle, `JWT_SECRET` devrait être remplacé par une valeur
 
 Le backend NestJS ne lance pas PostgreSQL automatiquement. Avant `npm run backend:dev`, il faut donc disposer d'une base PostgreSQL accessible avec les variables de `backend/.env`.
 
-Sur ce poste de développement, la base PostgreSQL existe déjà sous forme d'un container Docker nommé `datashare-postgres`. La commande suivante démarre ce container existant :
+### Création du container PostgreSQL depuis VS Code
+
+Pré-requis : Docker Desktop doit être lancé.
+
+Depuis le terminal intégré de VS Code, à la racine du projet, vérifier d'abord si le container existe déjà :
+
+```bash
+docker ps -a --filter "name=datashare-postgres"
+```
+
+Si aucun container `datashare-postgres` n'apparaît, le créer avec la commande suivante :
+
+```bash
+docker run --name datashare-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=datashare -p 5432:5432 -d postgres:16
+```
+
+Cette commande :
+
+- télécharge l'image PostgreSQL si elle n'est pas déjà présente ;
+- crée un container nommé `datashare-postgres` ;
+- crée une base nommée `datashare` ;
+- expose PostgreSQL sur le port local `5432`.
+
+La commande `docker run` sert uniquement à la création initiale. Si le container existe déjà, il faut le démarrer avec :
 
 ```bash
 npm run db:up
 ```
 
-Cette commande exécute :
-
-```bash
-docker start datashare-postgres
-```
-
-Elle ne crée pas de nouveau container. Elle suppose que le container `datashare-postgres` existe déjà et expose PostgreSQL sur le port `5432` avec les valeurs de `backend/.env.example` :
+Les valeurs utilisées correspondent aux variables de `backend/.env.example` :
 
 ```env
 DATABASE_HOST=localhost
@@ -81,14 +98,45 @@ DATABASE_PASSWORD=postgres
 DATABASE_NAME=datashare
 ```
 
-Commandes utiles :
+Si le port `5432` est déjà utilisé par un autre PostgreSQL local, il faut soit arrêter l'autre service, soit modifier le port exposé et adapter `DATABASE_PORT` dans `backend/.env`.
+
+Pour vérifier que le container est lancé :
 
 ```bash
+docker ps --filter "name=datashare-postgres"
+```
+
+### Démarrage et arrêt du container
+
+Une fois le container créé, les scripts npm suivants permettent de le piloter depuis le terminal VS Code :
+
+```bash
+npm run db:up
 npm run db:logs
 npm run db:down
 ```
 
-`npm run db:down` arrête le container sans le supprimer.
+- `npm run db:up` démarre le container existant avec `docker start datashare-postgres` ;
+- `npm run db:logs` affiche les logs PostgreSQL du container ;
+- `npm run db:down` arrête le container sans le supprimer.
+
+### Création des tables et relations
+
+En local, la création des tables est gérée automatiquement par TypeORM au démarrage du backend, grâce à la variable :
+
+```env
+TYPEORM_SYNCHRONIZE=true
+```
+
+Quand `npm run backend:dev` démarre, NestJS charge les entités TypeORM déclarées dans le backend et synchronise le schéma PostgreSQL.
+
+Le schéma détaillé de la base n'est pas recopié dans ce document. Il est documenté dans :
+
+```text
+docs/Architecture/Schema_structure_BDD_MCD.drawio.svg
+```
+
+Il n'y a donc pas de script SQL manuel à lancer pour créer les tables en environnement local. Les tables correspondant au modèle `users`, `files` et `share_links` sont créées à partir des entités TypeORM au démarrage du backend. Pour une production réelle, `TYPEORM_SYNCHRONIZE` doit passer à `false` et les changements de schéma doivent être gérés avec des migrations versionnées.
 
 ## Développement local
 
