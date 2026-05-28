@@ -35,7 +35,7 @@ docs/Architecture/schéma d’architecture de la solution logicielle.drawio.svg
 
 Le schéma se lit de gauche à droite. L'utilisateur interagit d'abord avec le frontend React/TypeScript depuis son navigateur. Ce frontend contient les pages visibles de l'application : connexion, inscription, téléversement, téléchargement public et espace personnel.
 
-Le frontend communique ensuite avec le backend NestJS via des requêtes HTTP. La plupart des échanges utilisent du JSON ; l'upload utilise `multipart/form-data`, le format standard pour envoyer un fichier avec ses options.
+Le frontend communique ensuite avec le backend NestJS via des requêtes HTTP. La plupart des échanges utilisent du JSON ; l'upload utilise `multipart/form-data`, car ce format permet d'envoyer dans une même requête le fichier binaire et les champs associés, comme la durée d'expiration, les tags ou le mot de passe de partage.
 
 Le backend centralise la logique métier : validation des DTO, authentification, gestion des fichiers, génération des liens publics, vérification des expirations et purge des fichiers expirés. Il dialogue avec PostgreSQL pour les données structurées et avec le stockage local pour les fichiers physiques.
 
@@ -170,46 +170,35 @@ Le lien public ne donne pas accès directement à la base de données. Il sert u
 
 ## Choix techniques
 
-Les choix techniques privilégient une stack TypeScript homogène, simple à maintenir et adaptée à un MVP web. L'objectif n'était pas d'utiliser les technologies les plus complexes, mais de choisir des outils cohérents avec les besoins : téléversement de fichiers, liens publics, comptes utilisateurs, API documentée, tests et possibilité d'évolution.
+Les choix techniques ont été faits en partant des besoins du projet plutôt que de la popularité des outils. DataShare est un MVP développé seul, avec des fonctionnalités centrées sur l'upload, le partage public, les comptes utilisateurs, l'expiration des fichiers, la documentation d'API et les tests. Les priorités étaient donc la cohérence de la stack, la maintenabilité, la rapidité de développement et la robustesse des données.
 
-| Besoin | Technologie choisie | Alternatives possibles | Justification |
+Le choix principal est une stack TypeScript de bout en bout. Le frontend, le backend, les DTO, les types de réponse et une partie de la validation restent dans le même langage. Cela réduit la charge mentale, limite les erreurs de mapping entre couches et rend le projet plus simple à maintenir. Ce choix répond aussi à un objectif de montée en compétence : après une expérience Java/Angular, l'objectif était d'explorer une stack plus légère et homogène autour de TypeScript.
+
+| Besoin | Technologie retenue | Alternatives possibles | Pourquoi ce choix plutôt que les alternatives |
 | --- | --- | --- | --- |
-| Interface web | React + TypeScript + Vite | Vue, Angular, Next.js | stack légère et rapide pour construire une interface interactive sans imposer un framework fullstack |
-| Routage frontend | React Router | routage manuel, Next.js router | routes claires pour les pages `/`, `/login`, `/register`, `/account` et `/download/:token` |
-| API backend | NestJS + TypeScript | Express, Fastify, Spring Boot | structure modulaire, DTO, guards, services, scheduler et tests faciles à organiser |
-| Base de données | PostgreSQL | MySQL, SQLite, MongoDB | modèle relationnel adapté aux utilisateurs, fichiers, liens et contraintes d'unicité |
-| ORM | TypeORM | Prisma, Knex | intégration directe avec NestJS et mapping explicite des entités TypeScript |
-| Authentification | JWT + Passport | sessions serveur, OAuth | solution stateless adaptée à une API REST et aux routes protégées |
-| Hash de mots de passe | bcryptjs | argon2, bcrypt natif | solution éprouvée, portable et suffisante pour le MVP avec un coût configuré à 12 |
-| Upload | Multer | Busboy, stockage direct cloud | solution standard pour recevoir du `multipart/form-data` dans l'écosystème NestJS/Express |
-| Stockage fichiers | Disque local backend | S3, Cloudinary, Azure Blob | choix simple pour un MVP local, avec une évolution possible vers un stockage objet |
-| Documentation API | OpenAPI + Swagger UI | Postman, documentation manuelle | contrat API versionnable, consultable et vérifiable par lint |
-| Tests backend | Jest + Supertest | Vitest, Mocha | outillage standard NestJS pour tests unitaires, services, contrôleurs et e2e API |
-| Tests frontend | Vitest + Testing Library | Jest, Cypress | tests rapides orientés composants, appels API et comportements utilisateur |
-
-### Justification détaillée des choix
-
-La stack TypeScript de bout en bout simplifie la cohérence entre frontend, backend, DTO et modèles de réponse.
-
-React avec Vite suffit pour une interface interactive sans imposer un framework fullstack. NestJS apporte une structure claire côté API avec modules, contrôleurs, services, DTO et guards.
-
-PostgreSQL convient au modèle relationnel du projet : utilisateurs, fichiers, liens de partage, clés étrangères et contraintes d'unicité. TypeORM sert de couche d'accès aux données et garde les entités proches du code TypeScript.
-
-JWT avec Passport permet de protéger les routes privées sans session serveur. Le même backend peut donc gérer les visiteurs anonymes et les utilisateurs connectés.
-
-Le stockage local des fichiers est un choix de MVP : simple à tester et suffisant pour la soutenance. Une production réelle demanderait plutôt un stockage objet, des sauvegardes et un scan antivirus.
-
-OpenAPI, Swagger, Jest, Supertest, Vitest et Testing Library ont été choisis pour documenter et vérifier les parcours critiques : authentification, upload, lien public, téléchargement protégé, espace utilisateur, suppression et purge.
+| Cohérence globale | TypeScript front + back | Java/Spring Boot, Angular, stack mixte | Une stack mixte aurait été viable mais aurait multiplié les langages et les conversions entre couches. Pour un MVP développé seul, TypeScript partout réduit la charge mentale et limite les écarts entre DTO, API et frontend. |
+| Interface web | React + TypeScript + Vite | Vue, Angular, Next.js | Vue aurait aussi permis une interface par composants. Angular aurait apporté un cadre plus complet, mais plus lourd pour une interface centrée sur quelques pages, formulaires et appels API. Next.js aurait été surtout pertinent avec du rendu serveur ou une logique fullstack. React + Vite garde un frontend léger, statique après build, cohérent avec TypeScript et séparé de l'API NestJS. |
+| Routage frontend | React Router | routage manuel, Next.js router | Le projet a besoin de routes client simples, dont une route avec paramètre `/download/:token`. Un routage manuel aurait recréé une logique déjà fournie par la librairie. Le router Next.js aurait imposé Next.js alors que le projet n'a pas besoin de son architecture. |
+| API backend | NestJS + TypeScript | Express, Fastify, Spring Boot | Express et Fastify auraient été viables, mais ils fournissent moins de cadre par défaut. Le backend contient validation, authentification, upload, guards, services métier, scheduler et tests : NestJS organise ces responsabilités nativement. Spring Boot aurait été robuste, mais aurait cassé la cohérence full TypeScript recherchée. |
+| Base de données | PostgreSQL | MySQL, SQLite, MongoDB | MongoDB serait pertinent avec un schéma fluctuant ou documentaire. SQLite serait adapté à un prototype très local, mais moins à une évolution serveur. MySQL serait viable, mais PostgreSQL correspond très bien au modèle stable et relationnel du projet : utilisateurs, fichiers, liens, contraintes d'unicité, clés étrangères et transactions. |
+| ORM | TypeORM | Prisma, Knex | Knex aurait donné plus de contrôle SQL, mais avec davantage de requêtes à écrire et maintenir. Prisma aurait été viable, mais ajoute son propre schéma et son workflow. TypeORM s'intègre directement avec NestJS et représente les tables sous forme d'entités proches du métier : `User`, `FileRecord` et `ShareLink`. |
+| Authentification | JWT + Passport | sessions serveur, OAuth | Les sessions serveur auraient obligé le backend à conserver un état de connexion. Pour une API REST consommée par un frontend séparé, JWT est plus simple : le client renvoie un token signé et le backend le vérifie sur les routes privées. Passport est retenu car il s'intègre directement aux guards NestJS. OAuth serait pertinent avec une connexion via Google ou GitHub, hors périmètre du MVP. |
+| Hash de mots de passe | bcryptjs | argon2, bcrypt natif | Argon2 serait plus robuste pour une production exigeante, notamment contre les attaques massives, mais ajoute plus de paramètres et de complexité. `bcrypt` natif est performant, mais dépend de modules compilés. `bcryptjs` réduit la charge d'installation et reste adapté au MVP : chaque mot de passe est salé et hashé avec un coût `12`, suffisant pour ralentir les essais automatisés sans compliquer le projet. |
+| Upload | Multer | Busboy, upload direct cloud | L'upload doit envoyer le fichier et ses options métier dans la même requête : mot de passe, tags, expiration. `multipart/form-data` répond à ce besoin sans convertir le fichier en base64. Busboy serait plus bas niveau et utile pour du streaming très fin. L'upload direct cloud serait adapté avec S3 ou équivalent, mais le MVP stocke localement les fichiers ; Multer est donc le choix le plus direct avec NestJS/Express. |
+| Stockage fichiers | Disque local backend | S3, Azure Blob, Cloudinary | S3, Azure Blob ou Cloudinary seraient plus adaptés à une production, surtout avec plusieurs serveurs, sauvegardes et forte volumétrie. Pour la soutenance, le stockage local permet de valider tout le parcours métier sans ajouter de dépendance cloud ni de complexité opérationnelle. |
+| Documentation API | OpenAPI + Swagger UI | Postman, documentation manuelle | Postman est utile pour tester, mais ne suffit pas comme contrat API versionnable. Une documentation manuelle peut vite se désynchroniser du code. OpenAPI fournit une spécification structurée, vérifiable par lint et consultable dans Swagger UI. |
+| Tests backend | Jest + Supertest | Vitest, Mocha | Jest sert aux tests unitaires et d'intégration NestJS : par exemple `files.controller.spec.ts` instancie le vrai `FilesController` avec un `FilesService` mocké pour vérifier que l'upload, la liste et la suppression sont bien délégués. Supertest complète ces tests en envoyant de vraies requêtes HTTP à l'application NestJS de test : par exemple `auth.e2e-spec.ts` teste `POST /auth/register` et `files.e2e-spec.ts` teste `POST /files` avec un fichier attaché. Vitest ou Mocha auraient été possibles, mais auraient demandé plus d'adaptation de la configuration backend existante. |
+| Tests frontend | Vitest + Testing Library | Jest, Cypress | Vitest est cohérent avec Vite, qui compile déjà les composants React en TypeScript/JSX ; cela évite de maintenir une configuration Jest séparée côté frontend. Testing Library teste les comportements visibles par l'utilisateur : par exemple `App.test.tsx` vérifie qu'un fichier téléversé affiche un lien de partage, qu'une erreur de connexion apparaît ou qu'un compte sans session est redirigé. `api.test.ts` complète cela en mockant `fetch` pour vérifier les appels API, comme l'envoi d'un `FormData` vers `POST /files`. Cypress aurait été utile pour des tests navigateur complets, mais plus lourd pour le MVP. |
 
 ### Choix assumés et limites
 
-Certains choix sont acceptables pour un MVP mais devront être renforcés en production :
+Certains choix sont adaptés au contexte MVP mais devront être renforcés avant une mise en production :
 
-- le stockage local devra être remplacé par un stockage objet ;
-- `TYPEORM_SYNCHRONIZE` devra être désactivé au profit de migrations ;
-- la purge manuelle devra être réservée à un rôle administrateur ;
-- un antivirus ou une vérification plus poussée des fichiers devra être ajouté ;
-- une CI/CD devra automatiser les tests, builds, lint OpenAPI et audits.
+- remplacer le stockage local par un stockage objet ;
+- désactiver `TYPEORM_SYNCHRONIZE` et utiliser des migrations versionnées ;
+- réserver les routes de maintenance ou de purge à un rôle administrateur ;
+- ajouter un scan antivirus ou une vérification plus poussée des fichiers ;
+- automatiser les tests, builds, lint OpenAPI et audits de sécurité dans une CI/CD.
 
 ## API REST
 
