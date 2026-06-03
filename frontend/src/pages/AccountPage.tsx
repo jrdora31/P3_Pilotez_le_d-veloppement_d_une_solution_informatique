@@ -1,9 +1,8 @@
-import { Clipboard, FileText, LogOut, Trash2, Upload } from "lucide-react";
+import { ExternalLink, FileText, LockKeyhole, LogOut, Menu, Trash2, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { deleteFile, listOwnFiles } from "../api";
 import { clearAuth, getAccessToken, getCurrentUser } from "../auth-storage";
-import markUrl from "../assets/datashare-mark.svg";
 import { FileListItem, FileStatusFilter } from "../types";
 
 export default function AccountPage() {
@@ -11,7 +10,7 @@ export default function AccountPage() {
   const user = getCurrentUser();
   const token = getAccessToken();
   const [files, setFiles] = useState<FileListItem[]>([]);
-  const [status, setStatus] = useState<FileStatusFilter>("active");
+  const [status, setStatus] = useState<FileStatusFilter>("all");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -56,15 +55,6 @@ export default function AccountPage() {
     navigate("/login", { replace: true });
   }
 
-  async function handleCopy(url: string | null) {
-    if (!url) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(url);
-    setNotice("Lien copié.");
-  }
-
   async function handleDelete(file: FileListItem) {
     if (!token || !window.confirm(`Supprimer "${file.originalName}" ?`)) {
       return;
@@ -88,116 +78,136 @@ export default function AccountPage() {
 
   return (
     <main className="account-shell">
-      <header className="account-header">
-        <div className="account-brand">
-          <img src={markUrl} alt="" className="brand-link-mark" />
-          <span>DataShare</span>
-        </div>
-        <div className="topbar-actions">
-          <button type="button" className="secondary-button compact-button" onClick={() => navigate("/")}>
-            <Upload aria-hidden="true" size={18} />
-            Téléverser
-          </button>
-          <button type="button" className="secondary-button compact-button" onClick={handleLogout}>
-            <LogOut aria-hidden="true" size={18} />
-            Déconnexion
-          </button>
-        </div>
-      </header>
+      <aside className="account-sidebar" aria-label="Navigation de l'espace">
+        <div className="sidebar-brand">DataShare</div>
+        <button type="button" className="sidebar-link">
+          Mes fichiers
+        </button>
+        <p className="sidebar-footer">Copyright DataShare® 2025</p>
+      </aside>
 
-      <section className="account-panel">
-        <p className="eyebrow">Mon espace</p>
-        <h1>Connecté</h1>
-        <dl className="account-details">
-          <div>
-            <dt>Email</dt>
-            <dd>{user.email}</dd>
+      <section className="account-main">
+        <header className="account-topbar">
+          <button type="button" className="menu-button" aria-label="Menu">
+            <Menu aria-hidden="true" size={18} />
+          </button>
+          <div className="mobile-user">
+            <span className="avatar-dot" aria-hidden="true">
+              {getUserInitials(user.email)}
+            </span>
+            <span>{formatUserName(user.email)}</span>
           </div>
-          <div>
-            <dt>Compte créé le</dt>
-            <dd>{new Intl.DateTimeFormat("fr-FR").format(new Date(user.createdAt))}</dd>
+          <div className="topbar-actions">
+            <button type="button" className="dark-nav-button" onClick={() => navigate("/")}>
+              <Upload aria-hidden="true" size={14} />
+              Ajouter des fichiers
+            </button>
+            <button type="button" className="logout-button" onClick={handleLogout}>
+              <LogOut aria-hidden="true" size={14} />
+              Déconnexion
+            </button>
           </div>
-        </dl>
-      </section>
+        </header>
 
-      <section className="history-section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Historique</p>
+        <div className="files-workspace">
+          <h1 className="sr-only">Connecté</h1>
+          <p className="sr-only">{user.email}</p>
+
+          <div className="section-heading">
             <h2>Mes fichiers</h2>
+            <div className="status-switch" role="group" aria-label="Filtrer les fichiers">
+              <button
+                type="button"
+                className={status === "all" ? "active" : ""}
+                onClick={() => setStatus("all")}
+              >
+                Tous
+              </button>
+              <button
+                type="button"
+                className={status === "active" ? "active" : ""}
+                onClick={() => setStatus("active")}
+              >
+                Actifs
+              </button>
+              <button
+                type="button"
+                className={status === "expired" ? "active" : ""}
+                onClick={() => setStatus("expired")}
+              >
+                Expiré
+              </button>
+            </div>
           </div>
-          <label className="compact-field">
-            État
-            <select value={status} onChange={(event) => setStatus(event.target.value as FileStatusFilter)}>
-              <option value="active">Actifs</option>
-              <option value="expired">Expirés</option>
-              <option value="all">Tous</option>
-            </select>
-          </label>
-        </div>
 
-        {notice ? <p className="notice success">{notice}</p> : null}
-        {error ? <p className="notice error">{error}</p> : null}
-        {isLoading ? <p className="muted">Chargement...</p> : null}
-        {!isLoading && files.length === 0 ? <p className="empty-state">Aucun fichier à afficher.</p> : null}
+          {notice ? <p className="notice success">{notice}</p> : null}
+          {error ? <p className="notice error">{error}</p> : null}
+          {isLoading ? <p className="muted">Chargement...</p> : null}
+          {!isLoading && files.length === 0 ? <p className="empty-state">Aucun fichier à afficher.</p> : null}
 
-        <div className="file-list">
-          {files.map((file) => (
-            <article className="file-row" key={file.id}>
-              <FileText aria-hidden="true" size={22} className="file-icon" />
-              <div className="file-row-main">
-                <h3>{file.originalName}</h3>
-                <p>
-                  {formatFileSize(file.size)} · Envoyé le {formatDate(file.createdAt)}
-                  {file.expiresAt ? ` · Expire le ${formatDate(file.expiresAt)}` : ""}
-                </p>
-                {file.tags.length ? (
-                  <div className="tag-list">
-                    {file.tags.map((tag) => (
-                      <span key={tag}>{tag}</span>
-                    ))}
+          <div className="file-list">
+            {files.map((file) => (
+              <article className={`file-row ${file.status === "expired" ? "expired" : ""}`} key={file.id}>
+                <FileText aria-hidden="true" size={18} className="file-icon" />
+                <div className="file-row-main">
+                  <h3>{file.originalName}</h3>
+                  <p>{file.status === "expired" ? "Expiré" : "Expire demain"}</p>
+                  {file.tags.length ? (
+                    <div className="tag-list">
+                      {file.tags.map((tag) => (
+                        <span key={tag}>{tag}</span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                {file.status === "expired" ? (
+                  <p className="expired-copy">Ce fichier à expiré, il n'est plus stocké chez nous</p>
+                ) : (
+                  <div className="file-actions">
+                    {file.passwordProtected ? (
+                      <span className="lock-indicator" title="Lien protégé par mot de passe">
+                        <LockKeyhole aria-hidden="true" size={14} />
+                      </span>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="outline-action danger-button"
+                      onClick={() => void handleDelete(file)}
+                    >
+                      <Trash2 aria-hidden="true" size={13} />
+                      Supprimer
+                    </button>
+                    {file.shareUrl ? (
+                      <a href={file.shareUrl} className="outline-action">
+                        Accéder
+                        <ExternalLink aria-hidden="true" size={13} />
+                      </a>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
-              <div className="file-actions">
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label={`Copier le lien de ${file.originalName}`}
-                  onClick={() => void handleCopy(file.shareUrl)}
-                  disabled={!file.shareUrl}
-                >
-                  <Clipboard aria-hidden="true" size={18} />
-                </button>
-                <button
-                  type="button"
-                  className="icon-button danger-button"
-                  aria-label={`Supprimer ${file.originalName}`}
-                  onClick={() => void handleDelete(file)}
-                >
-                  <Trash2 aria-hidden="true" size={18} />
-                </button>
-              </div>
-            </article>
-          ))}
+                )}
+              </article>
+            ))}
+          </div>
         </div>
       </section>
     </main>
   );
 }
 
-function formatFileSize(size: number): string {
-  return new Intl.NumberFormat("fr-FR", {
-    maximumFractionDigits: 1,
-    style: "unit",
-    unit: "megabyte",
-    unitDisplay: "short"
-  }).format(size / 1_000_000);
+function formatUserName(email: string): string {
+  const [rawName] = email.split("@");
+
+  return rawName
+    .split(/[._-]/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
 }
 
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("fr-FR", {
-    dateStyle: "medium",
-    timeStyle: "short"
-  }).format(new Date(value));
+function getUserInitials(email: string): string {
+  return formatUserName(email)
+    .split(" ")
+    .map((part) => part.charAt(0))
+    .slice(0, 2)
+    .join("");
 }

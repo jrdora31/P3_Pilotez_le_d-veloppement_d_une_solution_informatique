@@ -1,8 +1,7 @@
-import { Download, KeyRound, LoaderCircle } from "lucide-react";
+import { Download, FileText, KeyRound, LoaderCircle } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { downloadSharedFile, getShareLink } from "../api";
-import markUrl from "../assets/datashare-mark.svg";
 import { ShareLinkPublic } from "../types";
 
 export default function DownloadPage() {
@@ -73,60 +72,87 @@ export default function DownloadPage() {
   }
 
   return (
-    <main className="app-shell centered-shell">
-      <Link to="/" className="account-brand">
-        <img src={markUrl} alt="" className="brand-link-mark" />
-        <span>DataShare</span>
-      </Link>
+    <main className="download-shell gradient-page">
+      <header className="simple-header">
+        <Link to="/" className="brand-text">
+          DataShare
+        </Link>
+        <Link to="/login" className="dark-nav-button">
+          Se connecter
+        </Link>
+      </header>
 
-      <section className="download-panel">
+      <section className="center-stage" aria-live="polite">
         {isLoading ? (
-          <p className="loading-line">
-            <LoaderCircle aria-hidden="true" size={18} />
-            Chargement...
-          </p>
+          <div className="download-panel">
+            <p className="loading-line">
+              <LoaderCircle aria-hidden="true" size={18} />
+              Chargement...
+            </p>
+          </div>
         ) : null}
 
-        {!isLoading && error && !shareLink ? <p className="notice error">{error}</p> : null}
+        {!isLoading && error && !shareLink ? (
+          <div className="download-panel compact-message-panel">
+            <h1>Télécharger un fichier</h1>
+            <p className="notice error">{error}</p>
+          </div>
+        ) : null}
 
         {shareLink ? (
-          <>
-            <p className="eyebrow">Téléchargement</p>
-            <h1>{shareLink.fileName}</h1>
-            <dl className="file-meta">
-              <div>
-                <dt>Taille</dt>
-                <dd>{formatFileSize(shareLink.fileSize)}</dd>
-              </div>
-              <div>
-                <dt>Expiration</dt>
-                <dd>{shareLink.expiresAt ? formatDate(shareLink.expiresAt) : "Aucune"}</dd>
-              </div>
-            </dl>
+          <div className="download-panel">
+            <h1 aria-label={shareLink.fileName}>Télécharger un fichier</h1>
 
-            {error ? <p className="notice error">{error}</p> : null}
+            {shareLink.status === "expired" ? (
+              <p className="notice error">Ce fichier n'est plus disponible en téléchargement car il a expiré.</p>
+            ) : (
+              <>
+                <div className="selected-file">
+                  <FileText aria-hidden="true" size={18} />
+                  <div>
+                    <strong>{shareLink.fileName}</strong>
+                    <span>{formatFileSize(shareLink.fileSize)}</span>
+                  </div>
+                </div>
 
-            <form onSubmit={handleDownload} className="auth-form">
-              {shareLink.passwordRequired ? (
-                <label>
-                  Mot de passe
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    required
-                  />
-                </label>
-              ) : null}
+                {shareLink.expiresAt ? (
+                  <p className="notice info">{formatExpirationNotice(shareLink.expiresAt)}</p>
+                ) : (
+                  <span className="sr-only">Aucune</span>
+                )}
 
-              <button type="submit" className="primary-button" disabled={isDownloading}>
-                {shareLink.passwordRequired ? <KeyRound aria-hidden="true" size={18} /> : <Download aria-hidden="true" size={18} />}
-                {isDownloading ? "Téléchargement..." : "Télécharger"}
-              </button>
-            </form>
-          </>
+                {error ? <p className="notice error">{error}</p> : null}
+
+                <form onSubmit={handleDownload} className="auth-form">
+                  {shareLink.passwordRequired ? (
+                    <label>
+                      Mot de passe
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="Saisissez le mot de passe..."
+                        required
+                      />
+                    </label>
+                  ) : null}
+
+                  <button type="submit" className="primary-button" disabled={isDownloading}>
+                    {shareLink.passwordRequired ? (
+                      <KeyRound aria-hidden="true" size={16} />
+                    ) : (
+                      <Download aria-hidden="true" size={16} />
+                    )}
+                    {isDownloading ? "Téléchargement..." : "Télécharger"}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
         ) : null}
       </section>
+
+      <p className="page-footer">Copyright DataShare® 2025</p>
     </main>
   );
 }
@@ -145,4 +171,21 @@ function formatDate(value: string): string {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(new Date(value));
+}
+
+function formatExpirationNotice(value: string): string {
+  const expiration = new Date(value);
+  const today = new Date();
+  const millisecondsPerDay = 86_400_000;
+  const days = Math.ceil((expiration.getTime() - today.getTime()) / millisecondsPerDay);
+
+  if (days <= 0) {
+    return "Ce fichier expire aujourd'hui.";
+  }
+
+  if (days === 1) {
+    return "Ce fichier expirera demain.";
+  }
+
+  return `Ce fichier expirera dans ${days} jours.`;
 }

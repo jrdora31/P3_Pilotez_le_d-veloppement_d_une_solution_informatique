@@ -1,6 +1,6 @@
 # Plan de tests
 
-Dernière mise à jour : 2026-05-26.
+Dernière mise à jour : 2026-06-03.
 
 ## Objectif du document
 
@@ -77,7 +77,7 @@ Résultat :
 
 ### Frontend coverage
 
-Résultat vérifié le 2026-05-26.
+Résultat vérifié le 2026-06-03.
 
 Commande exécutée :
 
@@ -89,22 +89,22 @@ Résultat :
 
 - 3 fichiers de tests réussis.
 - 23 tests réussis.
-- Couverture globale statements : 84,75 %.
-- Couverture globale branches : 73,57 %.
-- Couverture globale functions : 83,05 %.
-- Couverture globale lines : 85,52 %.
+- Couverture globale statements : 84,16 %.
+- Couverture globale branches : 72,09 %.
+- Couverture globale functions : 82,81 %.
+- Couverture globale lines : 84,87 %.
 
-**Couverture frontend Vitest du 2026-05-26**
+**Couverture frontend Vitest du 2026-06-03**
 
-![Couverture frontend Vitest du 2026-05-26](screenshots/frontend_tests_result.png "Couverture frontend Vitest du 2026-05-26")
+![Couverture frontend Vitest du 2026-06-03](screenshots/frontend_tests_result.png "Couverture frontend Vitest du 2026-06-03")
 
 Interprétation :
 
-Le frontend dépasse désormais l'objectif indicatif de 70 % au global. Les tests couvrent les appels API, le stockage de session, l'authentification, l'upload anonyme, l'upload connecté avec tags, la copie de lien, l'espace utilisateur et les parcours de téléchargement public.
+Le frontend dépasse désormais l'objectif indicatif de 70 % au global. Les tests couvrent les appels API, le stockage de session, l'authentification, l'upload anonyme, l'upload connecté avec tags, la copie de lien, l'espace utilisateur, l'affichage du cadenas pour les fichiers protégés et les parcours de téléchargement public.
 
 Les zones qui restent les moins couvertes sont :
 
-- `AccountPage.tsx`, notamment la copie, la suppression et les erreurs de chargement ;
+- `AccountPage.tsx`, notamment la suppression, les erreurs de chargement et certains états responsives ;
 - certaines branches d'erreur de `UploadPage.tsx` ;
 - quelques messages d'erreur génériques dans `api.ts`.
 
@@ -113,7 +113,7 @@ Priorité d'amélioration :
 1. Ajouter un test de suppression depuis l'espace utilisateur.
 2. Ajouter un test d'erreur de chargement de l'historique.
 3. Ajouter un test d'erreur d'upload.
-4. Ajouter un test d'état vide ou de fichier sans lien copiable.
+4. Ajouter un test d'état vide ou de fichier sans lien accessible.
 
 ### Backend end-to-end
 
@@ -207,6 +207,7 @@ Ce compte sert à valider les parcours connectés : connexion, espace utilisateu
 | Critère d'acceptation | Preuve de test | Statut |
 | --- | --- | --- |
 | Un utilisateur connecté voit ses fichiers. | Test frontend d'historique utilisateur, test API frontend `listOwnFiles`, `FilesController`. | Validé |
+| Un fichier protégé par mot de passe est identifiable dans l'historique. | `FilesService` expose `passwordProtected`, OpenAPI documente le champ et le test frontend vérifie l'affichage du cadenas uniquement pour le fichier protégé. | Validé |
 | Un utilisateur non connecté est redirigé vers la connexion. | Test frontend `/account` sans session. | Validé |
 | La liste peut filtrer les fichiers actifs ou expirés. | `FilesService` teste le filtrage des fichiers actifs ; `FilesController` transmet le statut. | Partiel |
 | La suppression ne concerne que les fichiers du propriétaire. | `FilesService.deleteOwnFile` filtre par `fileId` et `ownerId` ; `FilesController` transmet l'utilisateur courant. | Partiel |

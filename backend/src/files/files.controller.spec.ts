@@ -95,6 +95,7 @@ describe("FilesController", () => {
         tags: ["projet"],
         shareToken: "public-token",
         shareUrl: "http://localhost:5173/download/public-token",
+        passwordProtected: true,
         expiresAt: null,
         status: "active" as const,
         createdAt: new Date("2026-01-01T10:00:00.000Z")

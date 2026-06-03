@@ -78,22 +78,14 @@ export class FilesService {
   }
 
   async listOwnFiles(ownerId: string, status: FileStatusFilter = "active"): Promise<FileListItem[]> {
-    const files = await this.filesRepository.find({
-      where: {
-        owner: {
-          id: ownerId
-        }
-      },
-      relations: {
-        shareLinks: true
-      },
-      order: {
-        createdAt: "DESC",
-        shareLinks: {
-          createdAt: "DESC"
-        }
-      }
-    });
+    const files = await this.filesRepository
+      .createQueryBuilder("file")
+      .leftJoinAndSelect("file.shareLinks", "shareLink")
+      .addSelect("shareLink.passwordHash")
+      .where("file.owner_id = :ownerId", { ownerId })
+      .orderBy("file.createdAt", "DESC")
+      .addOrderBy("shareLink.createdAt", "DESC")
+      .getMany();
 
     return files
       .map((file) => this.toFileListItem(file))
@@ -291,6 +283,7 @@ export class FilesService {
       tags: file.tags ?? [],
       shareToken: shareLink?.token ?? null,
       shareUrl: shareLink ? this.buildShareUrl(shareLink.token) : null,
+      passwordProtected: Boolean(shareLink?.passwordHash),
       expiresAt: shareLink?.expiresAt ?? null,
       status: shareLink && this.isExpired(shareLink) ? "expired" : "active",
       createdAt: file.createdAt

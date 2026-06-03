@@ -64,6 +64,7 @@ export interface FileListItem {
   tags: string[];
   shareToken: string | null;
   shareUrl: string | null;
+  passwordProtected: boolean;
   expiresAt: string | null;
   status: FileStatus;
   createdAt: string;
