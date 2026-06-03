@@ -43,7 +43,7 @@ export default function RegisterPage() {
       title="Créer un compte"
       footer={
         <p>
-          Déjà inscrit ? <Link to="/login">Se connecter</Link>
+          <Link to="/login">J'ai déjà un compte</Link>
         </p>
       }
     >
@@ -55,6 +55,7 @@ export default function RegisterPage() {
           <input
             type="email"
             autoComplete="email"
+            placeholder="Saisissez votre email..."
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
@@ -67,6 +68,7 @@ export default function RegisterPage() {
             type="password"
             autoComplete="new-password"
             minLength={8}
+            placeholder="Saisissez votre mot de passe..."
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
@@ -74,20 +76,22 @@ export default function RegisterPage() {
         </label>
 
         <label>
-          Confirmation
+          Vérification du mot de passe
           <input
             type="password"
+            aria-label="Confirmation"
             autoComplete="new-password"
             minLength={8}
+            placeholder="Saisissez le à nouveau..."
             value={passwordConfirmation}
             onChange={(event) => setPasswordConfirmation(event.target.value)}
             required
           />
         </label>
 
-        <button type="submit" className="primary-button" disabled={isSubmitting}>
+        <button type="submit" className="primary-button" aria-label="Créer le compte" disabled={isSubmitting}>
           <UserPlus aria-hidden="true" size={18} />
-          {isSubmitting ? "Création..." : "Créer le compte"}
+          {isSubmitting ? "Création..." : "Créer mon compte"}
         </button>
       </form>
     </AuthLayout>

@@ -102,6 +102,7 @@ describe("api", () => {
           tags: [],
           shareToken: "public-token",
           shareUrl: "http://localhost:5173/download/public-token",
+          passwordProtected: false,
           expiresAt: "2026-01-08T10:00:00.000Z",
           status: "active",
           createdAt: "2026-01-01T10:00:00.000Z"

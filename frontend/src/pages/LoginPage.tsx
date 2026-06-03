@@ -1,4 +1,3 @@
-import { LogIn } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { loginUser } from "../api";
@@ -35,14 +34,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthLayout
-      title="Connexion"
-      footer={
-        <p>
-          Pas encore de compte ? <Link to="/register">Créer un compte</Link>
-        </p>
-      }
-    >
+    <AuthLayout title="Connexion">
       {state?.notice ? <p className="notice success">{state.notice}</p> : null}
       {error ? <p className="notice error">{error}</p> : null}
 
@@ -52,6 +44,11 @@ export default function LoginPage() {
           <input
             type="email"
             autoComplete="email"
+            placeholder="Saisissez votre email..."
+            data-1p-ignore="true"
+            data-form-type="other"
+            data-lpignore="true"
+            data-protonpass-ignore="true"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
@@ -63,15 +60,23 @@ export default function LoginPage() {
           <input
             type="password"
             autoComplete="current-password"
+            placeholder="Saisissez votre mot de passe..."
+            data-1p-ignore="true"
+            data-form-type="other"
+            data-lpignore="true"
+            data-protonpass-ignore="true"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
           />
         </label>
 
-        <button type="submit" className="primary-button" disabled={isSubmitting}>
-          <LogIn aria-hidden="true" size={18} />
-          {isSubmitting ? "Connexion..." : "Se connecter"}
+        <Link to="/register" className="auth-inline-link">
+          Créer un compte
+        </Link>
+
+        <button type="submit" className="primary-button" aria-label="Se connecter" disabled={isSubmitting}>
+          {isSubmitting ? "Connexion..." : "Connexion"}
         </button>
       </form>
     </AuthLayout>

@@ -255,6 +255,20 @@ describe("App", () => {
               tags: ["projet"],
               shareToken: "public-token",
               shareUrl: "http://localhost:5173/download/public-token",
+              passwordProtected: false,
+              expiresAt: "2026-01-08T10:00:00.000Z",
+              status: "active",
+              createdAt: "2026-01-01T10:00:00.000Z"
+            },
+            {
+              id: "32b46b69-6328-47c2-b09c-6efa022c9d29",
+              originalName: "secret.pdf",
+              size: 120000,
+              mimeType: "application/pdf",
+              tags: [],
+              shareToken: "secret-token",
+              shareUrl: "http://localhost:5173/download/secret-token",
+              passwordProtected: true,
               expiresAt: "2026-01-08T10:00:00.000Z",
               status: "active",
               createdAt: "2026-01-01T10:00:00.000Z"
@@ -267,7 +281,9 @@ describe("App", () => {
     renderApp("/account");
 
     expect(await screen.findByText("contrat.pdf")).toBeInTheDocument();
+    expect(screen.getByText("secret.pdf")).toBeInTheDocument();
     expect(screen.getByText("projet")).toBeInTheDocument();
+    expect(screen.getAllByTitle("Lien protégé par mot de passe")).toHaveLength(1);
   });
 
   it("affiche une erreur si la connexion echoue", async () => {

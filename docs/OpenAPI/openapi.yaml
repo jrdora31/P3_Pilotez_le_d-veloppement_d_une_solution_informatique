@@ -463,6 +463,7 @@ components:
         - id
         - originalName
         - size
+        - passwordProtected
         - status
         - createdAt
       properties:
@@ -490,6 +491,9 @@ components:
           type: string
           format: uri
           nullable: true
+        passwordProtected:
+          type: boolean
+          description: Indique si le lien principal du fichier est protégé par mot de passe.
         expiresAt:
           type: string
           format: date-time

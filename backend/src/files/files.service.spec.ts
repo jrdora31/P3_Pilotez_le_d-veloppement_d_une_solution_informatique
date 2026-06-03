@@ -143,21 +143,31 @@ describe("FilesService", () => {
   });
 
   it("liste uniquement les fichiers actifs par défaut", async () => {
-    filesRepository.find.mockResolvedValue([
+    const queryBuilder = createFilesQueryBuilderMock([
       createFile({
         id: "active-file",
-        shareLinks: [createShareLink({ expiresAt: future })]
+        shareLinks: [
+          createShareLink({
+            expiresAt: future,
+            passwordHash: "$2a$12$hashed-password"
+          })
+        ]
       }),
       createFile({
         id: "expired-file",
         shareLinks: [createShareLink({ expiresAt: past })]
       })
     ]);
+    filesRepository.createQueryBuilder.mockReturnValue(queryBuilder);
 
     const response = await service.listOwnFiles("8f16a8a8-6046-43a2-85cc-dc639f6b7738");
 
     expect(response).toHaveLength(1);
-    expect(response[0].id).toBe("active-file");
+    expect(response[0]).toMatchObject({
+      id: "active-file",
+      passwordProtected: true
+    });
+    expect(queryBuilder.addSelect).toHaveBeenCalledWith("shareLink.passwordHash");
   });
 
   it("indique si un lien public est protégé par mot de passe", async () => {
@@ -238,6 +248,17 @@ describe("FilesService", () => {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       getOne: jest.fn().mockResolvedValue(result)
+    };
+  }
+
+  function createFilesQueryBuilderMock(result: FileRecord[]) {
+    return {
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue(result)
     };
   }
 });

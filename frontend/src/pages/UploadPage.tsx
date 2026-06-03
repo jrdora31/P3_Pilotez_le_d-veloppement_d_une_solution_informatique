@@ -1,22 +1,22 @@
-import { Clipboard, FolderClock, LogIn, Send, UserPlus } from "lucide-react";
+import { Clipboard, FileText, FolderClock, LogIn, UploadCloud } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { uploadFile } from "../api";
 import { getAccessToken, getCurrentUser } from "../auth-storage";
-import markUrl from "../assets/datashare-mark.svg";
 import { UploadResponse } from "../types";
 
 export default function UploadPage() {
   const user = getCurrentUser();
   const token = getAccessToken();
   const [file, setFile] = useState<File | null>(null);
-  const [expirationDays, setExpirationDays] = useState(7);
+  const [expirationDays, setExpirationDays] = useState(1);
   const [sharePassword, setSharePassword] = useState("");
   const [tags, setTags] = useState("");
   const [error, setError] = useState("");
   const [copyNotice, setCopyNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null);
+  const [uploadedExpirationDays, setUploadedExpirationDays] = useState<number | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,6 +39,7 @@ export default function UploadPage() {
         accessToken: token
       });
       setUploadResponse(response);
+      setUploadedExpirationDays(expirationDays);
       setFile(null);
       setTags("");
       setSharePassword("");
@@ -59,67 +60,65 @@ export default function UploadPage() {
   }
 
   return (
-    <main className="app-shell">
-      <header className="topbar">
-        <Link to="/" className="account-brand">
-          <img src={markUrl} alt="" className="brand-link-mark" />
-          <span>DataShare</span>
+    <main className="upload-shell gradient-page">
+      <header className="simple-header">
+        <Link to="/" className="brand-text">
+          DataShare
         </Link>
         <nav className="topbar-actions" aria-label="Navigation principale">
           {user ? (
-            <Link to="/account" className="secondary-button compact-button">
-              <FolderClock aria-hidden="true" size={18} />
+            <Link to="/account" className="dark-nav-button">
+              <FolderClock aria-hidden="true" size={12} />
               Mon espace
             </Link>
           ) : (
-            <>
-              <Link to="/login" className="secondary-button compact-button">
-                <LogIn aria-hidden="true" size={18} />
-                Connexion
-              </Link>
-              <Link to="/register" className="primary-link-button compact-button">
-                <UserPlus aria-hidden="true" size={18} />
-                Compte
-              </Link>
-            </>
+            <Link to="/login" className="dark-nav-button">
+              <LogIn aria-hidden="true" size={12} />
+              Se connecter
+            </Link>
           )}
         </nav>
       </header>
 
-      <section className="upload-layout">
-        <div className="upload-copy">
-          <p className="eyebrow">Téléversement</p>
-          <h1>Partager un fichier</h1>
-          <p className="muted">
-            {user
-              ? "Le fichier sera ajouté à votre espace personnel."
-              : "Le lien sera disponible sans rattachement à un compte."}
-          </p>
-        </div>
+      <input
+        id="upload-file"
+        className="sr-only"
+        type="file"
+        aria-label="Fichier"
+        onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+      />
 
-        <form onSubmit={handleSubmit} className="upload-panel" noValidate>
-          {error ? <p className="notice error">{error}</p> : null}
-
-          <label>
-            Fichier
-            <input
-              type="file"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              required
-            />
+      {!file && !uploadResponse ? (
+        <section className="upload-home" aria-labelledby="upload-title">
+          <h1 id="upload-title" className="sr-only">
+            Partager un fichier
+          </h1>
+          <p className="upload-question">Tu veux partager un fichier ?</p>
+          <label className="upload-orb" htmlFor="upload-file" aria-label="Choisir un fichier">
+            <UploadCloud aria-hidden="true" size={36} />
           </label>
+        </section>
+      ) : null}
 
-          <div className="form-grid">
-            <label>
-              Expiration
-              <input
-                type="number"
-                min={1}
-                max={7}
-                value={expirationDays}
-                onChange={(event) => setExpirationDays(Number(event.target.value))}
-              />
-            </label>
+      {file ? (
+        <section className="center-stage" aria-labelledby="upload-form-title">
+          <form onSubmit={handleSubmit} className="upload-panel" noValidate>
+            <h1 id="upload-form-title">Ajouter un fichier</h1>
+
+            <div className="selected-file">
+              <FileText aria-hidden="true" size={18} />
+              <div>
+                <strong>{file.name}</strong>
+                <span>{formatFileSize(file.size)}</span>
+              </div>
+              <label className="outline-mini-button" htmlFor="upload-file">
+                Changer
+              </label>
+            </div>
+
+            {error ? <p className="notice error">{error}</p> : null}
+
+            {file.size > 1_000_000_000 ? <p className="inline-danger">La taille des fichiers est limitée à 1 Go</p> : null}
 
             <label>
               Mot de passe
@@ -131,40 +130,80 @@ export default function UploadPage() {
                 placeholder="Optionnel"
               />
             </label>
-          </div>
 
-          {user ? (
             <label>
-              Tags
-              <input
-                type="text"
-                value={tags}
-                onChange={(event) => setTags(event.target.value)}
-                placeholder="facture, projet"
-              />
+              Expiration
+              <select value={expirationDays} onChange={(event) => setExpirationDays(Number(event.target.value))}>
+                <option value={1}>Une journée</option>
+                <option value={3}>Trois jours</option>
+                <option value={7}>Une semaine</option>
+              </select>
             </label>
-          ) : null}
 
-          <button type="submit" className="primary-button" disabled={isSubmitting}>
-            <Send aria-hidden="true" size={18} />
-            {isSubmitting ? "Téléversement..." : "Générer le lien"}
-          </button>
+            {user ? (
+              <label className="sr-only-field">
+                Tags
+                <input
+                  type="text"
+                  value={tags}
+                  onChange={(event) => setTags(event.target.value)}
+                  placeholder="facture, projet"
+                />
+              </label>
+            ) : null}
 
-          {uploadResponse ? (
-            <div className="share-result">
-              <span>Lien de partage</span>
-              <a href={uploadResponse.shareLink.url}>{uploadResponse.shareLink.url}</a>
-              <button type="button" className="secondary-button" onClick={copyShareUrl}>
-                <Clipboard aria-hidden="true" size={18} />
-                Copier
-              </button>
-              {copyNotice ? <p className="inline-success">{copyNotice}</p> : null}
+            <button
+              type="submit"
+              className="primary-button"
+              aria-label="Générer le lien"
+              disabled={isSubmitting || file.size > 1_000_000_000}
+            >
+              <UploadCloud aria-hidden="true" size={16} />
+              {isSubmitting ? "Téléversement..." : "Téléverser"}
+            </button>
+          </form>
+        </section>
+      ) : null}
+
+      {uploadResponse ? (
+        <section className="center-stage" aria-labelledby="upload-success-title">
+          <div className="upload-panel success-panel">
+            <h1 id="upload-success-title">Ajouter un fichier</h1>
+            <div className="selected-file">
+              <FileText aria-hidden="true" size={18} />
+              <div>
+                <strong>{uploadResponse.file.originalName}</strong>
+                <span>{formatFileSize(uploadResponse.file.size)}</span>
+              </div>
             </div>
-          ) : null}
-        </form>
-      </section>
+            <p className="success-copy">
+              Félicitations, ton fichier sera conservé chez nous pendant {formatRetentionDuration(uploadedExpirationDays)} !
+            </p>
+            <div className="share-result">
+              <span className="sr-only">Lien de partage</span>
+              <a href={uploadResponse.shareLink.url}>{uploadResponse.shareLink.url}</a>
+            </div>
+            <button type="button" className="primary-button narrow-button" aria-label="Copier" onClick={copyShareUrl}>
+              <Clipboard aria-hidden="true" size={16} />
+              Copier le lien
+            </button>
+            {copyNotice ? <p className="inline-success">{copyNotice}</p> : null}
+          </div>
+        </section>
+      ) : null}
+
+      <p className="page-footer">Copyright DataShare® 2025</p>
     </main>
   );
+}
+
+function formatFileSize(size: number): string {
+  return new Intl.NumberFormat("fr-FR", {
+    maximumFractionDigits: 1,
+    style: "unit",
+    unit: "megabyte",
+    unitDisplay: "short"
+  }).format(size / 1_000_000);
 }
 
 function splitTags(rawTags: string): string[] {
@@ -172,4 +211,17 @@ function splitTags(rawTags: string): string[] {
     .split(",")
     .map((tag) => tag.trim())
     .filter(Boolean);
+}
+
+function formatRetentionDuration(expirationDays: number | null): string {
+  switch (expirationDays) {
+    case 1:
+      return "une journée";
+    case 3:
+      return "trois jours";
+    case 7:
+      return "une semaine";
+    default:
+      return "la durée sélectionnée";
+  }
 }
