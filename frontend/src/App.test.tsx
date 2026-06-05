@@ -80,6 +80,9 @@ describe("App", () => {
         files: [new File(["contenu"], "contrat.pdf", { type: "application/pdf" })]
       }
     });
+    expect(screen.getAllByRole("option")).toHaveLength(7);
+    expect(screen.getByRole("option", { name: "Deux jours" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Six jours" })).toBeInTheDocument();
     await viewer.click(screen.getByRole("button", { name: "Générer le lien" }));
 
     expect(await screen.findByText("Lien de partage")).toBeInTheDocument();
@@ -128,12 +131,18 @@ describe("App", () => {
         files: [new File(["contenu"], "contrat.pdf", { type: "application/pdf" })]
       }
     });
+    fireEvent.change(screen.getByLabelText("Expiration"), {
+      target: {
+        value: "5"
+      }
+    });
     await viewer.type(screen.getByLabelText("Tags"), "finance, projet");
     await viewer.click(screen.getByRole("button", { name: "Générer le lien" }));
     await viewer.click(await screen.findByRole("button", { name: "Copier" }));
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect((init.body as FormData).get("tags")).toBe(JSON.stringify(["finance", "projet"]));
+    expect((init.body as FormData).get("expirationDays")).toBe("5");
     expect(writeText).toHaveBeenCalledWith("http://localhost:5173/download/public-token");
     expect(screen.getByText("Lien copié.")).toBeInTheDocument();
   });
