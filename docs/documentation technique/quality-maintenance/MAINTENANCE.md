@@ -132,6 +132,7 @@ Dernier contrôle documenté :
 - tests backend, frontend, e2e et builds : réussis.
 
 Les vulnérabilités précédemment détectées dans des dépendances transitives de développement ont été corrigées par mise à jour contrôlée, puis validées par les tests et builds.
+
 ## Purge des fichiers expirés
 
 La maintenance applicative inclut une purge des fichiers expirés afin d'éviter que le stockage local et la base de données conservent indéfiniment des fichiers qui ne sont plus accessibles via un lien de partage valide.
