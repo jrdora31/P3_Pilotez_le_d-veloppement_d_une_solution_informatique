@@ -52,7 +52,12 @@ PROJET_3/
     |-- OpenAPI/
     `-- documentation technique/
         |-- SCRIPTS_DEPLOIEMENT.md
+        |-- ARCHITECTURE_FRONTEND.md
         `-- quality-maintenance/
+            |-- MAINTENANCE.md
+            |-- PERF.md
+            |-- SECURITY.md
+            |-- TESTING.md
 ```
 
 ## Installation

@@ -5,6 +5,16 @@ import { uploadFile } from "../api";
 import { getAccessToken, getCurrentUser } from "../auth-storage";
 import { UploadResponse } from "../types";
 
+const EXPIRATION_OPTIONS = [
+  { days: 1, label: "Une journée" },
+  { days: 2, label: "Deux jours" },
+  { days: 3, label: "Trois jours" },
+  { days: 4, label: "Quatre jours" },
+  { days: 5, label: "Cinq jours" },
+  { days: 6, label: "Six jours" },
+  { days: 7, label: "Sept jours" }
+];
+
 export default function UploadPage() {
   const user = getCurrentUser();
   const token = getAccessToken();
@@ -134,20 +144,22 @@ export default function UploadPage() {
             <label>
               Expiration
               <select value={expirationDays} onChange={(event) => setExpirationDays(Number(event.target.value))}>
-                <option value={1}>Une journée</option>
-                <option value={3}>Trois jours</option>
-                <option value={7}>Une semaine</option>
+                {EXPIRATION_OPTIONS.map((option) => (
+                  <option key={option.days} value={option.days}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </label>
 
             {user ? (
-              <label className="sr-only-field">
+              <label>
                 Tags
                 <input
                   type="text"
                   value={tags}
                   onChange={(event) => setTags(event.target.value)}
-                  placeholder="facture, projet"
+                  placeholder="tag1, tag2, tag3"
                 />
               </label>
             ) : null}
@@ -214,14 +226,11 @@ function splitTags(rawTags: string): string[] {
 }
 
 function formatRetentionDuration(expirationDays: number | null): string {
-  switch (expirationDays) {
-    case 1:
-      return "une journée";
-    case 3:
-      return "trois jours";
-    case 7:
-      return "une semaine";
-    default:
-      return "la durée sélectionnée";
+  const selectedOption = EXPIRATION_OPTIONS.find((option) => option.days === expirationDays);
+
+  if (!selectedOption) {
+    return "la durée sélectionnée";
   }
+
+  return selectedOption.label.toLowerCase();
 }
