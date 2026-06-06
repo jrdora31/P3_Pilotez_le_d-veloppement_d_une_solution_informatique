@@ -1,4 +1,4 @@
-import { Download, FileText, KeyRound, LoaderCircle } from "lucide-react";
+import { CloudDownload, FileText, Info, LoaderCircle, OctagonAlert, TriangleAlert } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { downloadSharedFile, getShareLink } from "../api";
@@ -95,7 +95,7 @@ export default function DownloadPage() {
         {!isLoading && error && !shareLink ? (
           <div className="download-panel compact-message-panel">
             <h1>Télécharger un fichier</h1>
-            <p className="notice error">{error}</p>
+            <Callout variant="error">{error}</Callout>
           </div>
         ) : null}
 
@@ -104,7 +104,7 @@ export default function DownloadPage() {
             <h1 aria-label={shareLink.fileName}>Télécharger un fichier</h1>
 
             {shareLink.status === "expired" ? (
-              <p className="notice error">Ce fichier n'est plus disponible en téléchargement car il a expiré.</p>
+              <Callout variant="error">Ce fichier n'est plus disponible en téléchargement car il a expiré.</Callout>
             ) : (
               <>
                 <div className="selected-file">
@@ -116,12 +116,14 @@ export default function DownloadPage() {
                 </div>
 
                 {shareLink.expiresAt ? (
-                  <p className="notice info">{formatExpirationNotice(shareLink.expiresAt)}</p>
+                  <Callout variant={getExpirationCalloutVariant(shareLink.expiresAt)}>
+                    {formatExpirationNotice(shareLink.expiresAt)}
+                  </Callout>
                 ) : (
                   <span className="sr-only">Aucune</span>
                 )}
 
-                {error ? <p className="notice error">{error}</p> : null}
+                {error ? <Callout variant="error">{error}</Callout> : null}
 
                 <form onSubmit={handleDownload} className="auth-form">
                   {shareLink.passwordRequired ? (
@@ -138,11 +140,7 @@ export default function DownloadPage() {
                   ) : null}
 
                   <button type="submit" className="primary-button" disabled={isDownloading}>
-                    {shareLink.passwordRequired ? (
-                      <KeyRound aria-hidden="true" size={16} />
-                    ) : (
-                      <Download aria-hidden="true" size={16} />
-                    )}
+                    <CloudDownload aria-hidden="true" size={16} />
                     {isDownloading ? "Téléchargement..." : "Télécharger"}
                   </button>
                 </form>
@@ -154,6 +152,24 @@ export default function DownloadPage() {
 
       <p className="page-footer">Copyright DataShare® 2025</p>
     </main>
+  );
+}
+
+type CalloutVariant = "info" | "warning" | "error";
+
+interface CalloutProps {
+  children: React.ReactNode;
+  variant: CalloutVariant;
+}
+
+function Callout({ children, variant }: CalloutProps) {
+  const Icon = variant === "info" ? Info : variant === "warning" ? TriangleAlert : OctagonAlert;
+
+  return (
+    <p className={`callout ${variant}`}>
+      <Icon aria-hidden="true" size={14} />
+      <span>{children}</span>
+    </p>
   );
 }
 
@@ -173,11 +189,12 @@ function formatDate(value: string): string {
   }).format(new Date(value));
 }
 
+function getExpirationCalloutVariant(value: string): CalloutVariant {
+  return getRemainingDays(value) <= 1 ? "warning" : "info";
+}
+
 function formatExpirationNotice(value: string): string {
-  const expiration = new Date(value);
-  const today = new Date();
-  const millisecondsPerDay = 86_400_000;
-  const days = Math.ceil((expiration.getTime() - today.getTime()) / millisecondsPerDay);
+  const days = getRemainingDays(value);
 
   if (days <= 0) {
     return "Ce fichier expire aujourd'hui.";
@@ -188,4 +205,12 @@ function formatExpirationNotice(value: string): string {
   }
 
   return `Ce fichier expirera dans ${days} jours.`;
+}
+
+function getRemainingDays(value: string): number {
+  const expiration = new Date(value);
+  const today = new Date();
+  const millisecondsPerDay = 86_400_000;
+
+  return Math.ceil((expiration.getTime() - today.getTime()) / millisecondsPerDay);
 }

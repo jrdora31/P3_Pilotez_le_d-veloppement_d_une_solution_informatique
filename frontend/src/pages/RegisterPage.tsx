@@ -1,4 +1,3 @@
-import { UserPlus } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../api";
@@ -39,14 +38,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthLayout
-      title="Créer un compte"
-      footer={
-        <p>
-          <Link to="/login">J'ai déjà un compte</Link>
-        </p>
-      }
-    >
+    <AuthLayout title="Créer un compte">
       {error ? <p className="notice error">{error}</p> : null}
 
       <form onSubmit={handleSubmit} className="auth-form">
@@ -89,8 +81,11 @@ export default function RegisterPage() {
           />
         </label>
 
+        <Link to="/login" className="auth-inline-link">
+          J'ai déjà un compte
+        </Link>
+
         <button type="submit" className="primary-button" aria-label="Créer le compte" disabled={isSubmitting}>
-          <UserPlus aria-hidden="true" size={18} />
           {isSubmitting ? "Création..." : "Créer mon compte"}
         </button>
       </form>
