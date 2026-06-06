@@ -182,6 +182,8 @@ Ils couvrent :
 - l'architecture de la solution logicielle ;
 - le modèle de données avec les entités principales.
 
+La correspondance entre les maquettes Figma desktop, les routes front-end et les fichiers React est documentée dans [docs/documentation technique/ARCHITECTURE_FRONTEND.md](docs/documentation%20technique/ARCHITECTURE_FRONTEND.md).
+
 ## Preuves et ressources versionnées
 
 Les preuves de tests, sécurité, performance et maintenance sont regroupées dans [docs/documentation technique/quality-maintenance/](docs/documentation%20technique/quality-maintenance/).
