@@ -15,6 +15,7 @@ export class FilesExpirationScheduler implements OnModuleInit, OnModuleDestroy {
     private readonly configService: ConfigService
   ) {}
 
+  // Demarre la purge automatique quand le module NestJS est initialise.
   onModuleInit(): void {
     if (this.configService.get<string>("DISABLE_FILE_PURGE_INTERVAL", "false") === "true") {
       return;
@@ -28,12 +29,14 @@ export class FilesExpirationScheduler implements OnModuleInit, OnModuleDestroy {
     this.interval.unref?.();
   }
 
+  // Arrete proprement le timer de purge quand l'application s'eteint.
   onModuleDestroy(): void {
     if (this.interval) {
       clearInterval(this.interval);
     }
   }
 
+  // Calcule l'intervalle de purge a partir des variables d'environnement.
   private resolveIntervalMs(): number {
     const configuredIntervalMs = this.parsePositiveNumber(
       this.configService.get<string>("FILE_PURGE_INTERVAL_MS")
@@ -54,6 +57,8 @@ export class FilesExpirationScheduler implements OnModuleInit, OnModuleDestroy {
     return Math.max(configuredIntervalHours, 1) * HOUR_IN_MS;
   }
 
+  // vérifie que la valeur dans .env est un nombre positif et retourne ce nombre
+  // ou null si la valeur n'est pas valide
   private parsePositiveNumber(value: string | undefined): number | null {
     if (!value) {
       return null;
