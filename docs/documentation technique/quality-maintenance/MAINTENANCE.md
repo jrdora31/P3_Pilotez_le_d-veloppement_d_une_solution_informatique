@@ -132,3 +132,12 @@ Dernier contrôle documenté :
 - tests backend, frontend, e2e et builds : réussis.
 
 Les vulnérabilités précédemment détectées dans des dépendances transitives de développement ont été corrigées par mise à jour contrôlée, puis validées par les tests et builds.
+## Purge des fichiers expirés
+
+La maintenance applicative inclut une purge des fichiers expirés afin d'éviter que le stockage local et la base de données conservent indéfiniment des fichiers qui ne sont plus accessibles via un lien de partage valide.
+
+La logique principale est centralisée dans `FilesService.purgeExpiredFiles()` (`backend/src/files/files.service.ts`). Cette méthode recherche les liens de partage expirés en base de données, regroupe les fichiers concernés, supprime les fichiers physiques du disque via `LocalFileStorageService.deleteFile()`, puis retire les enregistrements correspondants de la base de données.
+
+La purge peut être déclenchée manuellement par la route protégée `POST /maintenance/expired-files/purge`, exposée dans `MaintenanceController` (`backend/src/files/maintenance.controller.ts`). Cette route utilise une protection JWT afin d'éviter qu'un utilisateur anonyme puisse lancer une opération de suppression globale.
+
+La purge est également lancée automatiquement par `FilesExpirationScheduler` (`backend/src/files/files-expiration.scheduler.ts`). Au démarrage du module, le scheduler calcule l'intervalle à partir des variables d'environnement `FILE_PURGE_INTERVAL_MS` ou `FILE_PURGE_INTERVAL_HOURS`, puis appelle régulièrement `FilesService.purgeExpiredFiles()` avec `setInterval`. La purge automatique peut être désactivée avec `DISABLE_FILE_PURGE_INTERVAL=true`.
