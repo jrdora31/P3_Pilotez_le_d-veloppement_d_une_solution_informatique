@@ -52,6 +52,7 @@ PROJET_3/
 `-- docs/
     |-- Architecture/
     |-- OpenAPI/
+    |-- Figma-comparaison/
     `-- documentation technique/
         |-- SCRIPTS_DEPLOIEMENT.md
         |-- ARCHITECTURE_FRONTEND.md
@@ -182,7 +183,7 @@ Ils couvrent :
 - l'architecture de la solution logicielle ;
 - le modèle de données avec les entités principales.
 
-La correspondance entre les maquettes Figma desktop, les routes front-end et les fichiers React est documentée dans [docs/documentation technique/ARCHITECTURE_FRONTEND.md](docs/documentation%20technique/ARCHITECTURE_FRONTEND.md).
+Le document [docs/documentation technique/ARCHITECTURE_FRONTEND.md](docs/documentation%20technique/ARCHITECTURE_FRONTEND.md) présente l'architecture front-end : routes React, pages principales, composants UI, organisation technique du code et comparaison entre les maquettes Figma et l'implémentation livrée.
 
 ## Preuves et ressources versionnées
 
