@@ -23,6 +23,7 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
+      // utilisation de l'api avec "registerUser" pour s'inscrire et redirection vers la page de connexion 
       await registerUser({ email, password, passwordConfirmation });
       navigate("/login", {
         replace: true,
