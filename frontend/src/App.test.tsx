@@ -317,7 +317,7 @@ describe("App", () => {
     expect(await screen.findByText("Identifiants invalides.")).toBeInTheDocument();
   });
 
-  it("bloque la creation de compte si mots de passe differents", async () => {
+  it("bloque la creation de compte si les mots de passe sont differents", async () => {
     // Testing Library : Création d'un utilisateur virtuel pour simuler les interactions.
     const viewer = userEvent.setup();
 
