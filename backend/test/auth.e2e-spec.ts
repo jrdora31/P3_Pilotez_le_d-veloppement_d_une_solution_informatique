@@ -44,14 +44,18 @@ class InMemoryUsersService implements Pick<UsersService, "findByEmail" | "findBy
 }
 
 describe("AuthController (e2e)", () => {
+  // Petite application Nest lancée juste pour les tests.
   let app: INestApplication;
+  // Fausse base en mémoire pour préparer les utilisateurs.
   let usersService: InMemoryUsersService;
 
   beforeEach(async () => {
+    // Nouvelle fausse base vide avant chaque test.
     usersService = new InMemoryUsersService();
 
     const moduleRef = await Test.createTestingModule({
       imports: [
+        // JWT de test.
         JwtModule.register({
           secret: "test-secret",
           signOptions: {
@@ -102,16 +106,20 @@ describe("AuthController (e2e)", () => {
   });
 
   it("POST /auth/login retourne un JWT et l'utilisateur", async () => {
+    // Création d'un utilisateur dans la fausse base.
     await usersService.seed("claire.marie@datashare.fr", "StrongPassword123!");
 
+    // Envoi d'une requête HTTP vers la route login.
     const response = await request(app.getHttpServer())
       .post("/auth/login")
       .send({
         email: "claire.marie@datashare.fr",
         password: "StrongPassword123!"
       })
+      // Les identifiants sont bons, donc l'API doit répondre 200.
       .expect(200);
 
+    // On attend un token et les infos publiques de l'utilisateur.
     expect(response.body).toMatchObject({
       accessToken: expect.any(String),
       user: {
@@ -119,6 +127,7 @@ describe("AuthController (e2e)", () => {
         email: "claire.marie@datashare.fr"
       }
     });
+    // Le hash du mot de passe ne doit jamais sortir dans la réponse. passwordhash --> undefined
     expect(response.body.user.passwordHash).toBeUndefined();
   });
 
