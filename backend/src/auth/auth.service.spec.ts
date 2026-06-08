@@ -4,11 +4,11 @@ import { hash } from "bcryptjs";
 import { User } from "../users/user.entity";
 import { UsersService } from "../users/users.service";
 import { AuthService } from "./auth.service";
-
+// importer les types nécessaires pour les tests (RegisterDto, LoginDto, AuthResponse, PublicUser)
 describe("AuthService", () => {
   let authService: AuthService;
   let usersService: jest.Mocked<Pick<UsersService, "findByEmail" | "findByEmailWithPassword" | "create">>;
-
+  // créer un utilisateur de base pour les tests
   const baseUser: User = {
     id: "8f16a8a8-6046-43a2-85cc-dc639f6b7738",
     email: "claire.marie@datashare.fr",
@@ -16,14 +16,14 @@ describe("AuthService", () => {
     createdAt: new Date("2026-01-01T10:00:00.000Z"),
     updatedAt: new Date("2026-01-01T10:00:00.000Z")
   };
-
+  // créer un faux user service avant chaque test avec des méthodes mockées pour findByEmail, findByEmailWithPassword et create
   beforeEach(() => {
     usersService = {
       findByEmail: jest.fn(),
       findByEmailWithPassword: jest.fn(),
       create: jest.fn()
     };
-
+    // créer une instance d'AuthService avec le faux user service et un JwtService de test
     authService = new AuthService(
       usersService as unknown as UsersService,
       new JwtService({
@@ -60,12 +60,13 @@ describe("AuthService", () => {
       updatedAt: baseUser.updatedAt
     });
     expect(savedHash).not.toBe("StrongPassword123!");
+    //verifie que le hash ressemble a un hash bcrypt (regex)
     expect(savedHash).toMatch(/^\$2[aby]\$/);
   });
-
+  //test un email déjà utilisé pour la création de compte
   it("refuse un email deja utilise", async () => {
     usersService.findByEmail.mockResolvedValue(baseUser);
-
+    // fait le test et verifie que l'exception est bien une ConflictException
     await expect(
       authService.register({
         email: "claire.marie@datashare.fr",

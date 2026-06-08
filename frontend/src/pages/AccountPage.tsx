@@ -151,7 +151,7 @@ export default function AccountPage() {
                 <FileText aria-hidden="true" size={18} className="file-icon" />
                 <div className="file-row-main">
                   <h3>{file.originalName}</h3>
-                  <p>{file.status === "expired" ? "Expiré" : "Expire demain"}</p>
+                  <p>{formatFileExpiration(file)}</p>
                   {file.tags.length ? (
                     <div className="tag-list">
                       {file.tags.map((tag) => (
@@ -210,4 +210,34 @@ function getUserInitials(email: string): string {
     .map((part) => part.charAt(0))
     .slice(0, 2)
     .join("");
+}
+
+function formatFileExpiration(file: FileListItem): string {
+  if (file.status === "expired") {
+    return "Expiré";
+  }
+
+  if (!file.expiresAt) {
+    return "Sans expiration";
+  }
+
+  const days = getRemainingDays(file.expiresAt);
+
+  if (days <= 0) {
+    return "Expire aujourd'hui";
+  }
+
+  if (days === 1) {
+    return "Expire demain";
+  }
+
+  return `Expire dans ${days} jours`;
+}
+
+function getRemainingDays(value: string): number {
+  const expiration = new Date(value);
+  const today = new Date();
+  const millisecondsPerDay = 86_400_000;
+
+  return Math.ceil((expiration.getTime() - today.getTime()) / millisecondsPerDay);
 }
