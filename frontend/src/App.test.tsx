@@ -247,6 +247,9 @@ describe("App", () => {
   });
 
   it("affiche l'historique de l'utilisateur connecté", async () => {
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+    const threeDaysFromNow = new Date(Date.now() + 3 * 86_400_000).toISOString();
+
     saveAuth({
       accessToken: "signed.jwt.token",
       user
@@ -265,7 +268,7 @@ describe("App", () => {
               shareToken: "public-token",
               shareUrl: "http://localhost:5173/download/public-token",
               passwordProtected: false,
-              expiresAt: "2026-01-08T10:00:00.000Z",
+              expiresAt: threeDaysFromNow,
               status: "active",
               createdAt: "2026-01-01T10:00:00.000Z"
             },
@@ -278,7 +281,7 @@ describe("App", () => {
               shareToken: "secret-token",
               shareUrl: "http://localhost:5173/download/secret-token",
               passwordProtected: true,
-              expiresAt: "2026-01-08T10:00:00.000Z",
+              expiresAt: tomorrow,
               status: "active",
               createdAt: "2026-01-01T10:00:00.000Z"
             }
@@ -292,6 +295,8 @@ describe("App", () => {
     expect(await screen.findByText("contrat.pdf")).toBeInTheDocument();
     expect(screen.getByText("secret.pdf")).toBeInTheDocument();
     expect(screen.getByText("projet")).toBeInTheDocument();
+    expect(screen.getByText("Expire dans 3 jours")).toBeInTheDocument();
+    expect(screen.getByText("Expire demain")).toBeInTheDocument();
     expect(screen.getAllByTitle("Lien protégé par mot de passe")).toHaveLength(1);
   });
 
