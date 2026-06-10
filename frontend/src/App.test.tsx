@@ -321,7 +321,7 @@ describe("App", () => {
 
     expect(await screen.findByText("Identifiants invalides.")).toBeInTheDocument();
   });
-
+  // Enjeux : Test qui doit affiché une erreur et qui ne doit pas call l'API
   it("bloque la creation de compte si les mots de passe sont differents", async () => {
     // Testing Library : Création d'un utilisateur virtuel pour simuler les interactions.
     const viewer = userEvent.setup();
@@ -329,7 +329,8 @@ describe("App", () => {
     // Création d'une fausse fonction (vi.fn) pour simuler les appels à l'API et vérifier 
     // qu'elle n'est pas appelée.
     // fetch est utilisé en interne par le composant pour faire les requêtes API, 
-    // on le mock pour vérifier qu'aucune requête n'est envoyée si le formulaire est invalide.
+    // on le mock (création d'une fausse fonction surveillée) pour vérifier qu'aucune requête
+    // n'est envoyée si le formulaire est invalide.
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
