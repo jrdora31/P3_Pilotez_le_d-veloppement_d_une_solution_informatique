@@ -65,15 +65,35 @@ describe("AuthService", () => {
   });
   //test un email déjà utilisé pour la création de compte
   it("refuse un email deja utilise", async () => {
+    const payload = {
+      email: "claire.marie@datashare.fr",
+      password: "StrongPassword123!",
+      passwordConfirmation: "StrongPassword123!"
+    };
+    
     usersService.findByEmail.mockResolvedValue(baseUser);
-    // fait le test et verifie que l'exception est bien une ConflictException
-    await expect(
-      authService.register({
-        email: "claire.marie@datashare.fr",
-        password: "StrongPassword123!",
-        passwordConfirmation: "StrongPassword123!"
-      })
-    ).rejects.toBeInstanceOf(ConflictException);
+    //Ajout console.log pour visualiser l'erreur et le comportement du mock
+    console.log("[TEST] email demande :", payload.email);
+    console.log("[MOCK] findByEmail retourne :", {
+      id: baseUser.id,
+      email: baseUser.email
+    });
+
+    let capturedError: unknown;
+
+    try {
+      await authService.register(payload);
+    } catch (error) {
+      capturedError = error;
+      console.log("[ERREUR] type :", error instanceof Error ? error.constructor.name : typeof error);
+      console.log("[ERREUR] message :", error instanceof Error ? error.message : error);
+    }
+    // Vérifie que l'erreur capturée est une instance de ConflictException
+    expect(capturedError).toBeInstanceOf(ConflictException);
+    // Vérifie que findByEmail a été appelé avec le bon email
+    expect(usersService.findByEmail).toHaveBeenCalledWith(payload.email);
+    // Vérifie que la méthode create n'a pas été appelée en cas de conflit d'email
+    expect(usersService.create).not.toHaveBeenCalled();
   });
 
   it("refuse un mot de passe trop court", async () => {
