@@ -338,15 +338,19 @@ describe("App", () => {
     renderApp("/register");
 
     // l'utilisateur remplit le formulaire avec deux mots de passe differents.
+    // Mettre les mêmes pour faire échouer le test et vérifier que le test est bien fiable.
     await viewer.type(screen.getByLabelText("Email"), "claire.marie@datashare.fr");
     await viewer.type(screen.getByLabelText("Mot de passe"), "StrongPassword123!");
     await viewer.type(screen.getByLabelText("Confirmation"), "DifferentPassword123!");
 
     // l'utilisateur essaie de creer son compte.
+    console.log("[TEST] passwords differents -> blocage front attendu");
     await viewer.click(screen.getByRole("button", { name: "Créer le compte" }));
 
     // expect : la page affiche l'erreur attendue.
-    expect(await screen.findByText("Les mots de passe ne correspondent pas.")).toBeInTheDocument();
+    const errorMessage = await screen.findByText("Les mots de passe ne correspondent pas.");
+    console.log("[ERREUR] message :", errorMessage.textContent);
+    expect(errorMessage).toBeInTheDocument();
 
     // expect :aucune requete API ne part car le frontend bloque le formulaire.
     expect(fetchMock).not.toHaveBeenCalled();
