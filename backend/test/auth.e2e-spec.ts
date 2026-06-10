@@ -114,13 +114,19 @@ describe("AuthController (e2e)", () => {
       .post("/auth/login")
       .send({
         email: "claire.marie@datashare.fr",
+        // Changer la valeur pour faire échouer le test et vérifier que le test est fiable.
         password: "StrongPassword123!"
       })
       // Les identifiants sont bons, donc l'API doit répondre 200.
       .expect(200);
 
+    console.log("[E2E] POST /auth/login -> 200");
+    console.log("[E2E] accessToken :", response.body.accessToken);
+    console.log("[E2E] user email :", response.body.user?.email);
+
     // On attend un token et les infos publiques de l'utilisateur.
     expect(response.body).toMatchObject({
+      // Changer la valeur de accessToken pour faire échouer le test et vérifier que le test est fiable.
       accessToken: expect.any(String),
       user: {
         id: expect.any(String),
