@@ -187,8 +187,9 @@ describe("FilesService", () => {
       status: "active"
     });
   });
-
+  // test la purge des fichiers expirés et la suppression des fichiers physiques associés
   it("purge les fichiers expirés et leurs fichiers physiques", async () => {
+    // créer un faux fichier expiré avec un lien de partage expiré
     const expiredFile = createFile({
       id: "expired-file",
       size: 300,
@@ -203,8 +204,15 @@ describe("FilesService", () => {
     filesRepository.remove.mockResolvedValue(expiredFile);
 
     const response = await service.purgeExpiredFiles();
+    // afficher des logs pour vérifier que la purge est déclenchée et que les fichiers sont supprimés
+    console.log("[PURGE] deleteFile :", expiredFile.storagePath);
+    console.log("[PURGE] purgedFiles :", response.purgedFiles);
+    console.log("[PURGE] purgedBytes :", response.purgedBytes);
 
+    // vérifie que le service de stockage a été appelé pour supprimer le fichier physique
+    // Changer le chemin pour faire échouer le test et vérifier que cette partie du test est fiable.
     expect(storageService.deleteFile).toHaveBeenCalledWith("uploads/expired-file.pdf");
+    // vérifie que le repository a été appelé pour supprimer le fichier de la base de données
     expect(filesRepository.remove).toHaveBeenCalledWith([expiredFile]);
     expect(response).toMatchObject({
       purgedFiles: 1,
